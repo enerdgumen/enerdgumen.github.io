@@ -1,0 +1,7 @@
+#!/bin/bash
+
+##
+# See http://pygments.org/docs/cmdline/
+##
+
+pygmentize -f html -S colorful -a .codehilite > css/pygments.css

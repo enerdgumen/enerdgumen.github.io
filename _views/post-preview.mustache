@@ -1,0 +1,14 @@
+<article class="content">
+    <header>
+        <h1><a href="{{permalink}}">{{title}}</a></h1>
+        <div class="meta">Written by <strong>Mauro Rocchi</strong> on {{dateAsString}}</div>
+    </header>
+
+    {{{previewHtml}}}
+
+    {{#hasMore}}
+    <div class="more">
+        <a href="{{permalink}}">(more...)</a>
+    </div>
+    {{/hasMore}}
+</article>

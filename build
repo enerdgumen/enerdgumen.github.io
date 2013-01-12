@@ -1,0 +1,127 @@
+#!/usr/bin/env python 
+from markdown import Markdown
+from pystache import Renderer
+from datetime import datetime
+import os
+
+SITE_NAME = "maurocchi.github.io"
+MD = Markdown(extensions=['extra','meta','codehilite'])
+
+def read(filename):
+    with open(filename, "r") as f:
+        return f.read().decode('utf-8')
+
+def write(filename, content):
+    with open(filename, "w") as f:
+        f.write(content.encode('utf-8'))
+
+def urlize(title):
+    import re
+    return re.sub(r'[^a-zA-Z0-9]+', '-', title.lower().strip())
+
+##
+# Post
+##
+
+class Post(object):
+    def __init__(self, previewHtml, html, meta):
+        self.previewHtml = previewHtml
+        self.html = html
+        self.title = ' '.join(meta['title'])
+        self.date = datetime.strptime(' '.join(meta['date']), "%Y-%m-%d %H:%M")
+        self.dateAsString = self.date.strftime("%d %B %Y")
+        self.permalink = "/%d/%02d/%s.htm" % (self.date.year, self.date.month, urlize(self.title))
+        self.hasMore = self.previewHtml != self.html
+
+def readPost(name):
+    fullname = '_posts/%s' % name
+    source = read(fullname)
+    html = MD.convert(source)
+    meta = MD.Meta
+    moreIndex = source.find('<!-- more -->')
+    if moreIndex == -1:
+        previewSource = source
+    else:
+        previewSource = source[:moreIndex]
+    previewHtml = MD.convert(previewSource)
+    MD.reset()
+    return Post(previewHtml, html, meta)
+
+posts = [readPost(name) for name in os.listdir('_posts')]
+posts.sort(key=lambda p: p.date, reverse=True)
+
+##
+# Page
+##
+
+class Page(object):
+    def __init__(self, html, meta):
+        self.html = html
+        self.title = ' '.join(meta['title'])
+        self.permalink = "/%s.htm" % (urlize(self.title))
+
+def readPage(name):
+    fullname = '_pages/%s' % name
+    source = read(fullname)
+    html = MD.convert(source)
+    meta = MD.Meta
+    MD.reset()
+    return Page(html, meta)
+
+pages = [readPage(name) for name in os.listdir('_pages')]
+pages.sort(key=lambda p: p.title)
+
+##
+# Build
+##
+
+renderer = Renderer(search_dirs='_views')
+
+def renderLayout(viewName, context):
+    title = context.title if hasattr(context, 'title') else None
+    body = renderer.render_name(viewName, context)
+    return renderer.render_name('layout', {
+        'title': title,
+        'body': body,
+        'posts': posts,
+        'pages': pages
+    })
+
+# index.htm
+index = renderLayout('index', { 'posts': posts })
+write('index.htm', index)
+
+for post in posts:
+    html = renderLayout('post', post)
+    path = post.permalink[1:]
+    fulldir, name = os.path.split(path)
+    if not os.path.exists(fulldir):
+        os.makedirs(fulldir)
+    write(path, html)
+
+for page in pages:
+    html = renderLayout('page', page)
+    write(page.permalink[1:], html)
+
+##
+# RSS
+##
+exit()
+import PyRSS2Gen
+
+def postToRSS(post):
+    return PyRSS2Gen.RSSItem(
+        title = post.title,
+        link = post.permalink,
+        description = "A post.",
+        guid = PyRSS2Gen.Guid(post.permalink),
+        pubDate = post.date)
+
+rss = PyRSS2Gen.RSS2(
+    title = "Mauro Rocchi's Blog",
+    link = "http://%s" % SITE_NAME,
+    description = "Programming in Action",
+    lastBuildDate = datetime.now(),
+    items = [postToRSS(post) for post in posts])
+
+rss.write_xml(open("rss.xml", "w"))
