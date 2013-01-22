@@ -22,7 +22,43 @@
 <body>
 
 <section id="container">
+<article class="content">
+    <header>
+        <h1><a href="/2013/01/introduction-to-emaze-dysfunctional.htm">Introduction to Emaze Dysfunctional</a></h1>
+        <div class="meta">Written by <strong>Mauro Rocchi</strong> on 22 January 2013</div>
+    </header>
 
+    <p><a href="https://bitbucket.org/emaze/emaze-dysfunctional">Emaze Dysfunctional</a> is a Java library providing the support for the functional programming, released by <a href="http://emaze.net">Emaze Networks</a> under BSD license. Developed in accordance with <a href="http://en.wikipedia.org/wiki/SOLID_%28object-oriented_design%29">solid principles</a> of OOP, it's distinguished from other similar libraries for simplicity, robustness and high reusability of its components.</p>
+<p>I will describe the main features of the current version 5.2 through some demonstrative examples, taken from the "classical" literature.</p>
+<h2>Quicksort</h2>
+<p>The following fragment implements the <a href="http://en.wikipedia.org/wiki/Quicksort">quicksort</a> algorithm, choosing, for simplicity, the first item as the pivot.</p>
+<div class="codehilite"><pre><span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">quicksort</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">items</span><span class="o">,</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">items</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">items</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="kd">final</span> <span class="n">T</span> <span class="n">head</span> <span class="o">=</span> <span class="n">items</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+    <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">Consumers</span><span class="o">.</span><span class="na">all</span><span class="o">(</span><span class="n">items</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">Multiplexing</span><span class="o">.</span><span class="na">chain</span><span class="o">(</span>
+            <span class="n">quicksort</span><span class="o">(</span><span class="n">Filtering</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">tail</span><span class="o">,</span> <span class="n">Dispatching</span><span class="o">.</span><span class="na">rcurry</span><span class="o">(</span><span class="n">order</span><span class="o">,</span> <span class="n">head</span><span class="o">)),</span> <span class="n">order</span><span class="o">),</span>
+            <span class="n">Iterations</span><span class="o">.</span><span class="na">iterator</span><span class="o">(</span><span class="n">head</span><span class="o">),</span>
+            <span class="n">quicksort</span><span class="o">(</span><span class="n">Filtering</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">tail</span><span class="o">,</span> <span class="n">Logic</span><span class="o">.</span><span class="na">not</span><span class="o">(</span><span class="n">Dispatching</span><span class="o">.</span><span class="na">rcurry</span><span class="o">(</span><span class="n">order</span><span class="o">,</span> <span class="n">head</span><span class="o">))),</span> <span class="n">order</span><span class="o">));</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>The function, in addition to the iterator with the items to sort, takes an argument of type <code>BinaryPredicate</code>, one of several <a href="http://en.wikipedia.org/wiki/Function_object">functors</a> provided by the library. It belong to the predicates family, that is those functions that return a boolean value. The "binary" prefix means that it's a predicate with ariety 2, infact it receives two values and retorns <em>true</em> if these are in order.</p>
+<p>The available functors, intended to become your best friends, in order of arity (from 0 to 3) are: </p>
+<ul>
+<li><strong>Procedures</strong>: <code>java.lang.Runnable</code> (from the standard library), <code>Action</code>, <code>BinaryAction</code> e <code>TernaryAction</code>;</li>
+<li><strong>Predicates</strong>: <code>Proposition</code>, <code>Predicate</code>, <code>BinaryPredicate</code>, <code>TernaryPredicate</code>;</li>
+<li><strong>Generics</strong>: <code>Provider</code>, <code>Delegate</code>, <code>BinaryDelegate</code>, <code>TernaryDelegate</code>.</li>
+</ul>
+<p>As you can see a <code>QuadruplePredicate</code> doesn't exist, indeed <em>Dysfunctional</em> is developed following the <em>one, two, three, too many!</em> principle. If you need a fourth parameter, probably, or there are some design errors, or it could be the case of grouping related parameters into a container object.</p>
+
+    <div class="more">
+        <a href="/2013/01/introduction-to-emaze-dysfunctional.htm">(more...)</a>
+    </div>
+</article>
 </section>
 
 <aside id="sidebar">
@@ -48,6 +84,7 @@
     <section class="posts">
         <h1>Recent posts</h1>
         <ul>
+            <li><a href="/2013/01/introduction-to-emaze-dysfunctional.htm">Introduction to Emaze Dysfunctional</a></li>
         </ul>
     </section>
 
