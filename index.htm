@@ -24,6 +24,35 @@
 <section id="container">
 <article class="content">
     <header>
+        <h1><a href="/2013/02/monitoring-logs-with-sauron.htm">Monitoring logs with Sauron</a></h1>
+        <div class="meta">Written by <strong>Mauro Rocchi</strong> on 13 February 2013</div>
+    </header>
+
+    <p><a href="http://github.com/maurocchi/sauron">Sauron</a> is a simple self-contained <em>Python</em> 2.3 script, without any dependency, useful to monitor errors on log files in real time from the command-line.</p>
+<p>By default it follows all log files in <code>/var/log</code> directory and shown the rows containing an "error" word (bad, cannot, error, exception, fail, fails, failed, failure, incorrect, invalid, unable, unexpected, wrong).</p>
+<div class="codehilite"><pre><span class="nv">$ </span>sauron <span class="o">[</span>options<span class="o">]</span> <span class="o">[</span>paths <span class="o">(</span>default /var/log<span class="o">)]</span>
+
+Options:
+    -h, --help            show this <span class="nb">help </span>message and <span class="nb">exit</span>
+    -f FILENAME_REGEX, --files<span class="o">=</span>FILENAME_REGEX
+                          filename regex <span class="o">(</span>default <span class="s1">&#39;log$&#39;</span><span class="o">)</span>
+    -a, --all             the log file are followed from the begin
+    -w WORDS, --words<span class="o">=</span>WORDS
+                          comma-separed words which filters the lines <span class="o">(</span>default:
+                          error, exception, fail, fails, failed, failure,
+                          cannot, unable, unexpected, incorrect, invalid, bad,
+                          wrong<span class="o">)</span>
+    -r LINE_REGEX, --regex<span class="o">=</span>LINE_REGEX
+                          regex to filter the log lines <span class="o">(</span>it overwrites the
+                          --words option<span class="o">)</span>
+    -i CHECK_INTERVAL, --interval<span class="o">=</span>CHECK_INTERVAL
+                          interval in seconds before to scan again the paths
+                          <span class="o">(</span>default 1<span class="o">)</span>
+    --version
+</pre></div>
+
+</article><article class="content">
+    <header>
         <h1><a href="/2013/01/introduction-to-emaze-dysfunctional.htm">Introduction to Emaze Dysfunctional</a></h1>
         <div class="meta">Written by <strong>Mauro Rocchi</strong> on 22 January 2013</div>
     </header>
@@ -84,6 +113,7 @@
     <section class="posts">
         <h1>Recent posts</h1>
         <ul>
+            <li><a href="/2013/02/monitoring-logs-with-sauron.htm">Monitoring logs with Sauron</a></li>
             <li><a href="/2013/01/introduction-to-emaze-dysfunctional.htm">Introduction to Emaze Dysfunctional</a></li>
         </ul>
     </section>
