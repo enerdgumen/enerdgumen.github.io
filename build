@@ -102,26 +102,3 @@ for post in posts:
 for page in pages:
     html = renderLayout('page', page)
     write(page.permalink[1:], html)
-
-##
-# RSS
-##
-exit()
-import PyRSS2Gen
-
-def postToRSS(post):
-    return PyRSS2Gen.RSSItem(
-        title = post.title,
-        link = post.permalink,
-        description = "A post.",
-        guid = PyRSS2Gen.Guid(post.permalink),
-        pubDate = post.date)
-
-rss = PyRSS2Gen.RSS2(
-    title = "Mauro Rocchi's Blog",
-    link = "http://%s" % SITE_NAME,
-    description = "Programming in Action",
-    lastBuildDate = datetime.now(),
-    items = [postToRSS(post) for post in posts])
-
-rss.write_xml(open("rss.xml", "w"))
