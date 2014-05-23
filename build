@@ -77,10 +77,10 @@ pages.sort(key=lambda p: p.title)
 
 renderer = Renderer(search_dirs='_views')
 
-def renderLayout(viewName, context):
+def renderLayout(layout, viewName, context):
     title = context.title if hasattr(context, 'title') else None
     body = renderer.render_name(viewName, context)
-    return renderer.render_name('layout', {
+    return renderer.render_name(layout, {
         'title': title,
         'body': body,
         'posts': posts,
@@ -88,11 +88,11 @@ def renderLayout(viewName, context):
     })
 
 # index.htm
-index = renderLayout('index', { 'posts': posts })
+index = renderLayout('layout_two_columns', 'index', { 'posts': posts })
 write('index.htm', index)
 
 for post in posts:
-    html = renderLayout('post', post)
+    html = renderLayout('layout_one_column', 'post', post)
     path = post.permalink[1:]
     fulldir, name = os.path.split(path)
     if not os.path.exists(fulldir):
@@ -100,5 +100,5 @@ for post in posts:
     write(path, html)
 
 for page in pages:
-    html = renderLayout('page', page)
+    html = renderLayout('layout_two_columns', 'page', page)
     write(page.permalink[1:], html)

@@ -1,0 +1,33 @@
+{{>header}}
+
+<aside id="sidebar">
+    <header class="title">
+        <h1><a href="/">Mauro Rocchi's Blog</a></h1>
+        <h2>Programming in Action</h2>
+    </header>
+
+    <section class="pages">
+        <h1>Pages</h1>
+        <ul>
+            {{#pages}}
+            <li><a href="{{permalink}}">{{title}}</a></li>
+            {{/pages}}
+            <li><a xmlns:cc="http://creativecommons.org/ns#" href="https://github.com/maurocchi" property="cc:attributionName" rel="cc:attributionURL">Open source</a></li>
+        </ul>
+    </section>
+
+    <section class="posts">
+        <h1>Recent posts</h1>
+        <ul>
+            {{#posts}}
+            <li><a href="{{permalink}}">{{title}}</a></li>
+            {{/posts}}
+        </ul>
+    </section>
+</aside>
+
+<section id="container">
+{{{body}}}
+</section>
+
+{{>footer}}
