@@ -6,6 +6,7 @@
 
     {{{html}}}
 
+    {{#deploy}}
     <!-- AddThis Button BEGIN -->
     <div class="addthis_toolbox addthis_default_style addthis_16x16_style">
     <a class="addthis_button_facebook"></a>
@@ -16,8 +17,10 @@
     </div>
     <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=ra-5231b03d468cf7fd"></script>
     <!-- AddThis Button END -->
+    {{/deploy}}
 </article>
 
+{{#deploy}}
 <div id="disqus_thread"></div>
 <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
@@ -32,3 +35,4 @@
     })();
 </script>
 <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments</a>.</noscript>
+{{/deploy}}

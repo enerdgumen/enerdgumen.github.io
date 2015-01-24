@@ -26,6 +26,8 @@ from datetime import datetime
 from distutils import dir_util
 import os
 import re
+import sys
+import shutil
 
 from markdown import Markdown
 from pystache import Renderer
@@ -41,12 +43,22 @@ class Source:
         return os.listdir(self.root)
 
     def read(self, name):
-        with open(name, "r") as f:
+        filename = os.path.join(self.root, name)
+        with open(filename, "r") as f:
             return f.read().decode('utf-8')
 
 class Target:
     def __init__(self, root):
         self.root = root
+
+    def copy_into(self, filename):
+        name = os.path.basename(filename)
+        dst = os.path.join(self.root, name)
+        if os.path.isdir(filename):
+            shutil.rmtree(dst, ignore_errors=True)
+            shutil.copytree(filename, dst)
+        else:
+            shutil.copy(filename, dst)
 
     def write(self, filename, content):
         fullname = os.path.join(self.root, filename)
@@ -76,10 +88,10 @@ class PostsRepository:
         return posts
 
     def read_post(self, name):
-        fullname = '_posts/%s' % name
-        content = self.source.read(fullname)
+        content = self.source.read(name)
         html = md.convert(content)
         meta = md.Meta
+        md.reset()
         more_index = content.find('<!-- more -->')
         if more_index == -1:
             preview_source = content
@@ -104,21 +116,21 @@ class PagesRepository:
         return pages
 
     def read_page(self, name):
-        fullname = '_pages/%s' % name
-        content = self.source.read(fullname)
+        content = self.source.read(name)
         html = md.convert(content)
         meta = md.Meta
         md.reset()
         return Page(html, meta)
 
 class View:
-    def __init__(self):
+    def __init__(self, context):
         self.renderer = Renderer(search_dirs='_views')
+        self.default_context = context
 
     def render(self, layout_name, view_name, context):
         title = context.title if hasattr(context, 'title') else None
-        body = self.renderer.render_name(view_name, context)
-        return self.renderer.render_name(layout_name, {
+        body = self.renderer.render_name(view_name, self.default_context, context)
+        return self.renderer.render_name(layout_name, self.default_context, {
             'title': title,
             'body': body,
             'posts': posts,
@@ -126,11 +138,19 @@ class View:
         })
 
 if __name__ == '__main__':
+    deploy = 'deploy' in sys.argv
+    if deploy:
+        target = Target('.')
+    else:
+        target = Target('target')
+        target.copy_into('css')
+        target.copy_into('images')
+        target.copy_into('favicon.png')
+
     md = Markdown(extensions=['extra', 'meta', 'codehilite'])
     posts = PostsRepository(Source('_posts')).read_all()
     pages = PagesRepository(Source('_pages')).read_all()
-    view = View()
-    target = Target('.')
+    view = View({'deploy': deploy})
     target.write('index.htm', view.render('layout_two_columns', 'index', {'posts': posts}))
     for post in posts:
         path = post.permalink[1:]
