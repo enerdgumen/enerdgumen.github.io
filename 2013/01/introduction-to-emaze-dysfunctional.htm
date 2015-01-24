@@ -24,11 +24,66 @@
 </header>
 <article class="content">
     <header>
-        <h1></h1>
-        <div class="meta">Written by <strong>Mauro Rocchi</strong> on </div>
+        <h1>Introduction to Emaze Dysfunctional</h1>
+        <div class="meta">Written by <strong>Mauro Rocchi</strong> on 22 January 2013</div>
     </header>
 
-    
+    <p><a href="https://bitbucket.org/emaze/emaze-dysfunctional">Emaze Dysfunctional</a> is a Java library providing the support for the functional programming, released by <a href="http://emaze.net">Emaze Networks</a> under BSD license. Developed in accordance with <a href="http://en.wikipedia.org/wiki/SOLID_%28object-oriented_design%29">solid principles</a> of OOP, it's distinguished from other similar libraries for simplicity, robustness and high reusability of its components.</p>
+<p>I will describe the main features of the current version 5.2 through some demonstrative examples, taken from the "classical" literature.</p>
+<h2>Quicksort</h2>
+<p>The following fragment implements the <a href="http://en.wikipedia.org/wiki/Quicksort">quicksort</a> algorithm, choosing, for simplicity, the first item as the pivot.</p>
+<div class="codehilite"><pre><span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">quicksort</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">items</span><span class="o">,</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">if</span> <span class="o">(!</span><span class="n">items</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">items</span><span class="o">;</span>
+    <span class="o">}</span>
+    <span class="kd">final</span> <span class="n">T</span> <span class="n">head</span> <span class="o">=</span> <span class="n">items</span><span class="o">.</span><span class="na">next</span><span class="o">();</span>
+    <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">tail</span> <span class="o">=</span> <span class="n">Consumers</span><span class="o">.</span><span class="na">all</span><span class="o">(</span><span class="n">items</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">Multiplexing</span><span class="o">.</span><span class="na">chain</span><span class="o">(</span>
+            <span class="n">quicksort</span><span class="o">(</span><span class="n">Filtering</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">tail</span><span class="o">,</span> <span class="n">Dispatching</span><span class="o">.</span><span class="na">rcurry</span><span class="o">(</span><span class="n">order</span><span class="o">,</span> <span class="n">head</span><span class="o">)),</span> <span class="n">order</span><span class="o">),</span>
+            <span class="n">Iterations</span><span class="o">.</span><span class="na">iterator</span><span class="o">(</span><span class="n">head</span><span class="o">),</span>
+            <span class="n">quicksort</span><span class="o">(</span><span class="n">Filtering</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">tail</span><span class="o">,</span> <span class="n">Logic</span><span class="o">.</span><span class="na">not</span><span class="o">(</span><span class="n">Dispatching</span><span class="o">.</span><span class="na">rcurry</span><span class="o">(</span><span class="n">order</span><span class="o">,</span> <span class="n">head</span><span class="o">))),</span> <span class="n">order</span><span class="o">));</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>The function, in addition to the iterator with the items to sort, takes an argument of type <code>BinaryPredicate</code>, one of several <a href="http://en.wikipedia.org/wiki/Function_object">functors</a> provided by the library. It belong to the predicates family, that is those functions that return a boolean value. The "binary" prefix means that it's a predicate with ariety 2, infact it receives two values and retorns <em>true</em> if these are in order.</p>
+<p>The available functors, intended to become your best friends, in order of arity (from 0 to 3) are: </p>
+<ul>
+<li><strong>Procedures</strong>: <code>java.lang.Runnable</code> (from the standard library), <code>Action</code>, <code>BinaryAction</code> e <code>TernaryAction</code>;</li>
+<li><strong>Predicates</strong>: <code>Proposition</code>, <code>Predicate</code>, <code>BinaryPredicate</code>, <code>TernaryPredicate</code>;</li>
+<li><strong>Generics</strong>: <code>Provider</code>, <code>Delegate</code>, <code>BinaryDelegate</code>, <code>TernaryDelegate</code>.</li>
+</ul>
+<p>As you can see a <code>QuadruplePredicate</code> doesn't exist, indeed <em>Dysfunctional</em> is developed following the <em>one, two, three, too many!</em> principle. If you need a fourth parameter, probably, or there are some design errors, or it could be the case of grouping related parameters into a container object.</p>
+<!-- more -->
+
+<p>Looking the function body it could observe the usage of the <code>Consumers</code> façade, that exposes useful methods to "consume" the elements of an iterator, iterable or array.
+The code of <code>Consumers.all(items)</code> yields all elements remained of the iterator and inserts them in the output list.</p>
+<p>The <code>Multiplexing</code> façade handles operations such as "many to one" or vice versa. In this case, <code>Multiplexing.chain(...)</code> returns an iterator that concatenates the three ones received.</p>
+<p>Then, the quicksort gives back the elements lower than the pivot sorted recursively, the pivot, and the remaining elements, always sorted recursively. The selection of the elements lower than the pivot is carried out by the <code>Filtering.filter(tail, Dispatching.rcurry(order, head))</code> statement, which filters the list of objects holding the <code>Dispatching.rcurry(order, head)</code> predicate.</p>
+<p>The <code>rcurry</code> method stands for "right curry", the <a href="http://www.haskell.org/haskellwiki/Partial_application">partial application </a> (not  <a href="http://www.haskell.org/haskellwiki/Currying">currying</a>) of <code>head</code> to the second argument of the <code>order</code> predicate. In practice, it returns a unary predicate equivalent to:</p>
+<div class="codehilite"><pre><span class="k">new</span> <span class="n">Predicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;()</span> <span class="o">{</span>
+  <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">accept</span><span class="o">(</span><span class="n">T</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">order</span><span class="o">.</span><span class="na">accept</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">head</span><span class="o">);</span>
+  <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>After it's necessary to concatenate the pivot, and given that <code>chain</code> concatenates iterators I used <code>Iterations.iterator(head)</code> to create an iterator that provides only one element (one could achieve the same effect with <code>Arrays.asList(head).iterator()</code>, but so the code is more clear).</p>
+<p>The third argument of the <code>chain</code> is similar to the first, but to get the remaining elements the predicate is inverted by the <code>Logic.not</code> method.</p>
+<p>The function, finally, can be used in the following way:</p>
+<div class="codehilite"><pre><span class="nd">@Test</span>
+<span class="kd">public</span> <span class="kt">void</span> <span class="nf">sortingANonSortedList</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">final</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">ascOrder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;()</span> <span class="o">{</span>
+        <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Integer</span> <span class="n">a</span><span class="o">,</span> <span class="n">Integer</span> <span class="n">b</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="n">a</span> <span class="o">&lt;</span> <span class="n">b</span><span class="o">;</span>
+        <span class="o">}</span>
+    <span class="o">};</span>
+    <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">sequence</span> <span class="o">=</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span><span class="mi">5</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">6</span><span class="o">,</span> <span class="mi">9</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">7</span><span class="o">,</span> <span class="mi">1</span><span class="o">,</span> <span class="mi">8</span><span class="o">);</span>
+    <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">sorted</span> <span class="o">=</span> <span class="n">Consumers</span><span class="o">.</span><span class="na">all</span><span class="o">(</span><span class="n">Quicksort</span><span class="o">.</span><span class="na">sort</span><span class="o">(</span><span class="n">sequence</span><span class="o">.</span><span class="na">iterator</span><span class="o">(),</span> <span class="n">ascOrder</span><span class="o">));</span>
+    <span class="n">Assert</span><span class="o">.</span><span class="na">assertArrayEquals</span><span class="o">(</span><span class="k">new</span> <span class="n">Integer</span><span class="o">[]{</span><span class="mi">1</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">2</span><span class="o">,</span> <span class="mi">3</span><span class="o">,</span> <span class="mi">5</span><span class="o">,</span> <span class="mi">6</span><span class="o">,</span> <span class="mi">7</span><span class="o">,</span> <span class="mi">8</span><span class="o">,</span> <span class="mi">9</span><span class="o">},</span> <span class="n">sorted</span><span class="o">.</span><span class="na">toArray</span><span class="o">());</span>
+<span class="o">}</span>
+</pre></div>
 
     <!-- AddThis Button BEGIN -->
     <div class="addthis_toolbox addthis_default_style addthis_16x16_style">
@@ -46,7 +101,7 @@
 <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
     var disqus_shortname = 'maurocchi';
-    var disqus_identifier = '';
+    var disqus_identifier = '/2013/01/introduction-to-emaze-dysfunctional.htm';
 
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function() {

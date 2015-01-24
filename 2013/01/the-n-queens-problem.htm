@@ -24,11 +24,177 @@
 </header>
 <article class="content">
     <header>
-        <h1></h1>
-        <div class="meta">Written by <strong>Mauro Rocchi</strong> on </div>
+        <h1>The N-queens problem</h1>
+        <div class="meta">Written by <strong>Mauro Rocchi</strong> on 23 January 2013</div>
     </header>
 
-    
+    <p>The <a href="http://en.wikipedia.org/wiki/Eight_queens_puzzle">problem of the N-queens</a> is a classic puzzle that consists in placing N queens on a chessboard NxN without that they threaten each other. With languages ​​that natively support the functional constructs, like <a href="http://www.scala-lang.org/">Scala</a>, the problem can be solved with less than 10 lines of code (without loss of clarity), with Java of course it's a bit more tricky.
+I propose the classic <a href="http://moritz.faui2k3.org/en/backtracking">backtracking algorithm</a>, developed with a functional object-oriented approach, using <a href="https://bitbucket.org/emaze/emaze-dysfunctional">Emaze Dysfunctional</a> extensively.</p>
+<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="nf">queens</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+    <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">queenMoves</span> <span class="o">=</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span>
+            <span class="n">Pair</span><span class="o">.</span><span class="na">of</span><span class="o">(-</span><span class="mi">1</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">),</span>
+            <span class="n">Pair</span><span class="o">.</span><span class="na">of</span><span class="o">(-</span><span class="mi">1</span><span class="o">,</span> <span class="mi">0</span><span class="o">),</span>
+            <span class="n">Pair</span><span class="o">.</span><span class="na">of</span><span class="o">(-</span><span class="mi">1</span><span class="o">,</span> <span class="mi">1</span><span class="o">));</span>
+    <span class="kd">final</span> <span class="n">Mover</span> <span class="n">mover</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Mover</span><span class="o">(</span><span class="n">queenMoves</span><span class="o">);</span>
+    <span class="kd">final</span> <span class="n">IsQueenSafe</span> <span class="n">isQueenSafe</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IsQueenSafe</span><span class="o">(</span><span class="n">mover</span><span class="o">);</span>
+    <span class="kd">final</span> <span class="n">PlaceNextQueens</span> <span class="n">placeNextQueens</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PlaceNextQueens</span><span class="o">(</span><span class="n">isQueenSafe</span><span class="o">);</span>
+    <span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">columns</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Ranges</span><span class="o">(</span><span class="k">new</span> <span class="n">ComparableComparator</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;(),</span> <span class="k">new</span> <span class="n">NextIntegerSequencingPolicy</span><span class="o">(),</span> <span class="mi">0</span><span class="o">).</span><span class="na">rightHalfOpen</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">Maybe</span><span class="o">.</span><span class="na">just</span><span class="o">(</span><span class="n">n</span><span class="o">));</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="n">PlaceQueens</span><span class="o">(</span><span class="n">Dispatching</span><span class="o">.</span><span class="na">curry</span><span class="o">(</span><span class="n">placeNextQueens</span><span class="o">,</span> <span class="n">columns</span><span class="o">)).</span><span class="na">perform</span><span class="o">(</span><span class="n">n</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<!-- more -->
+
+<p>The <code>queens</code> method receives the board size and returns the list of the possible solutions (a solution is a list of integers, representing the configuration of the queens on the board), the body doesn't directly implement the algorithm, but rather it configures properly the components involved which then delegates the searching for solutions.</p>
+<ul>
+<li><code>Mover</code> is a binary function that, received the row and column where a queen is placed, returns a list of all the possible positions reachable from it (an iterator of pairs of row/column);</li>
+<li><code>IsQueenSafe</code> is a predicate that, received the actual queens configuration and a column index, returns true if a queen placed in such column is safe (she isn't captured by any other queen);</li>
+<li><code>PlaceNextQueens</code> is a binary function that, given a list of columns and the actual queens configuration, tries to add a queen on each column and returns the list of the configurations in which the new queen is safe;</li>
+<li><code>PlaceQueens</code> is the function implementing the recursive search of the solutions.</li>
+</ul>
+<h2>Moving the queen</h2>
+<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Mover</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
+
+    <span class="c1">// iterable of pairs where the former is the row increment, and the latter is the column increment</span>
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">moves</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">Mover</span><span class="o">(</span><span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">moves</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">moves</span> <span class="o">=</span> <span class="n">moves</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="nf">perform</span><span class="o">(</span><span class="kd">final</span> <span class="n">Integer</span> <span class="n">row</span><span class="o">,</span> <span class="kd">final</span> <span class="n">Integer</span> <span class="n">column</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">Multiplexing</span><span class="o">.</span><span class="na">chain</span><span class="o">(</span><span class="n">Applications</span><span class="o">.</span><span class="na">transform</span><span class="o">(</span><span class="n">moves</span><span class="o">,</span> <span class="k">new</span> <span class="n">Delegate</span><span class="o">&lt;</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+            <span class="kd">public</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="nf">perform</span><span class="o">(</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">move</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="k">new</span> <span class="n">MoveIterator</span><span class="o">(</span><span class="n">move</span><span class="o">,</span> <span class="n">row</span><span class="o">,</span> <span class="n">column</span><span class="o">);</span>
+            <span class="o">}</span>
+        <span class="o">}));</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>The object is initialized with a sequence of pairs, each of them represents a possible move of the piece (in terms of variation of the position of row/column). For example, the pair (-1, 0) enables the vertical moviment.<br />
+The responsability for moving the pieace is delegated to the following <code>MoveIterator</code>, that is the only component with state of the whole algorithm. The iterator applies the variation of position relative to the current one, until all the space on the board is consumed.</p>
+<p><code>Mover</code> uses a new function: <code>Applications.trasform</code>. It returns an iterator where the next element is obtained by applying the provided unary function to the original item, in other words it's the conventional <code>map</code> that operates over iterators in a lazy way.</p>
+<p>The result is an iterator containing all the positions reachable from the queen.</p>
+<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MoveIterator</span> <span class="kd">extends</span> <span class="n">ReadOnlyIterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">move</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">row</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="kt">int</span> <span class="n">column</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">MoveIterator</span><span class="o">(</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">move</span><span class="o">,</span> <span class="kt">int</span> <span class="n">row</span><span class="o">,</span> <span class="kt">int</span> <span class="n">column</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">move</span> <span class="o">=</span> <span class="n">move</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">row</span> <span class="o">=</span> <span class="n">row</span><span class="o">;</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">column</span> <span class="o">=</span> <span class="n">column</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">hasNext</span><span class="o">()</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">row</span> <span class="o">+</span> <span class="n">move</span><span class="o">.</span><span class="na">first</span><span class="o">()</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+                <span class="o">&amp;&amp;</span> <span class="n">column</span> <span class="o">+</span> <span class="n">move</span><span class="o">.</span><span class="na">second</span><span class="o">()</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="nf">next</span><span class="o">()</span> <span class="o">{</span>
+        <span class="n">row</span> <span class="o">+=</span> <span class="n">move</span><span class="o">.</span><span class="na">first</span><span class="o">();</span>
+        <span class="n">column</span> <span class="o">+=</span> <span class="n">move</span><span class="o">.</span><span class="na">second</span><span class="o">();</span>
+        <span class="k">return</span> <span class="n">Pair</span><span class="o">.</span><span class="na">of</span><span class="o">(</span><span class="n">row</span><span class="o">,</span> <span class="n">column</span><span class="o">);</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>Finally <code>MoveIterator</code> extends <code>ReadOnlyIterator</code>, an iterator that doesn't support the method <code>delete</code>.</p>
+<h2>Is the queen safe?</h2>
+<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">IsQueenSafe</span> <span class="kd">implements</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">mover</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">IsQueenSafe</span><span class="o">(</span><span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">mover</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">mover</span> <span class="o">=</span> <span class="n">mover</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">accept</span><span class="o">(</span><span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">queens</span><span class="o">,</span> <span class="kd">final</span> <span class="n">Integer</span> <span class="n">column</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="kt">int</span> <span class="n">row</span> <span class="o">=</span> <span class="n">queens</span><span class="o">.</span><span class="na">size</span><span class="o">();</span>
+        <span class="kd">final</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">positions</span> <span class="o">=</span> <span class="n">mover</span><span class="o">.</span><span class="na">perform</span><span class="o">(</span><span class="n">row</span><span class="o">,</span> <span class="n">column</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">Filtering</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">positions</span><span class="o">,</span> <span class="k">new</span> <span class="n">Predicate</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;()</span> <span class="o">{</span>
+            <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">position</span><span class="o">)</span> <span class="o">{</span>
+                <span class="k">return</span> <span class="n">queens</span><span class="o">.</span><span class="na">get</span><span class="o">(</span><span class="n">position</span><span class="o">.</span><span class="na">first</span><span class="o">())</span> <span class="o">==</span> <span class="n">position</span><span class="o">.</span><span class="na">second</span><span class="o">();</span>
+            <span class="o">}</span>
+        <span class="o">}).</span><span class="na">hasNext</span><span class="o">()</span> <span class="o">==</span> <span class="kc">false</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>To check whether a queen is safe at a given location must "move" it and see if it meets another queen, so this component uses the <code>mover</code> collaborator to get all the possible reachable positions. Informally, the queen is in position <code>(row, column)</code> when <code>queens[row] == column</code>, therefore the predicate checks this situation.<br />
+Note the use of the <code>hasNext</code> as a result of the function, which takes advantage lazy evaluation of iterators: the function returns <em>false</em> when it detects the first queen.</p>
+<h2>Adding a queen</h2>
+<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PlaceNextQueens</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">isQueenSafe</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">PlaceNextQueens</span><span class="o">(</span><span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">isQueenSafe</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">isQueenSafe</span> <span class="o">=</span> <span class="n">isQueenSafe</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="nf">perform</span><span class="o">(</span><span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">columns</span><span class="o">,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">queens</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">safeColumns</span> <span class="o">=</span> <span class="n">Filtering</span><span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">columns</span><span class="o">,</span> <span class="n">Dispatching</span><span class="o">.</span><span class="na">curry</span><span class="o">(</span><span class="n">isQueenSafe</span><span class="o">,</span> <span class="n">queens</span><span class="o">));</span>
+        <span class="k">return</span> <span class="n">Applications</span><span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">safeColumns</span><span class="o">,</span> <span class="n">Dispatching</span><span class="o">.</span><span class="na">curry</span><span class="o">(</span><span class="k">new</span> <span class="n">AddToList</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;(),</span> <span class="n">queens</span><span class="o">));</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>It receives the actual configuration of the queens and a list of columns on which to try to place a new queen on the next row, and returns all the possible configurations in which the new queen is safe.<br />
+To implement it in functional way I've used the functor <code>AddToList</code>, actually unavailable in <em>Dysfunctional</em>. Given a list and an element it returns a new list with the new item added.</p>
+<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AddToList</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">perform</span><span class="o">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">list</span><span class="o">,</span> <span class="n">T</span> <span class="n">item</span><span class="o">)</span> <span class="o">{</span>
+        <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedList</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;(</span><span class="n">list</span><span class="o">);</span>
+        <span class="n">result</span><span class="o">.</span><span class="na">add</span><span class="o">(</span><span class="n">item</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">;</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>The list of columns is obtained generating through the façade <code>Ranges</code> an iterable from <code>0</code> to <code>n-1</code>:</p>
+<div class="codehilite"><pre><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">columns</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Ranges</span><span class="o">(</span>
+    <span class="k">new</span> <span class="n">ComparableComparator</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;(),</span>
+    <span class="k">new</span> <span class="n">NextIntegerSequencingPolicy</span><span class="o">(),</span>
+    <span class="mi">0</span>
+<span class="o">).</span><span class="na">rightHalfOpen</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">Maybe</span><span class="o">.</span><span class="na">just</span><span class="o">(</span><span class="n">n</span><span class="o">));</span>
+</pre></div>
+
+
+<h2>Finding all solutions</h2>
+<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PlaceQueens</span> <span class="kd">implements</span> <span class="n">Delegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
+
+    <span class="kd">private</span> <span class="kd">final</span> <span class="n">Delegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">placeNextQueens</span><span class="o">;</span>
+
+    <span class="kd">public</span> <span class="nf">PlaceQueens</span><span class="o">(</span><span class="n">Delegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">placeNextQueens</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">this</span><span class="o">.</span><span class="na">placeNextQueens</span> <span class="o">=</span> <span class="n">placeNextQueens</span><span class="o">;</span>
+    <span class="o">}</span>
+
+    <span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="nf">perform</span><span class="o">(</span><span class="n">Integer</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">if</span> <span class="o">(</span><span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="o">)</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="n">Collections</span><span class="o">.</span><span class="na">singletonList</span><span class="o">(</span><span class="n">Collections</span><span class="o">.&lt;</span><span class="n">Integer</span><span class="o">&gt;</span><span class="n">emptyList</span><span class="o">());</span>
+        <span class="o">}</span>
+        <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">subQueens</span> <span class="o">=</span> <span class="n">perform</span><span class="o">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">Consumers</span><span class="o">.</span><span class="na">all</span><span class="o">(</span><span class="n">Multiplexing</span><span class="o">.</span><span class="na">flatten</span><span class="o">(</span><span class="n">Applications</span><span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">subQueens</span><span class="o">,</span> <span class="n">placeNextQueens</span><span class="o">)));</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p><code>PlaceQueens</code> is the heart of the backtracking algorithm. It delegates the adding of a new queen to the collaborator <code>placeNextQueens</code> and uses the method <code>Multiplexing.flatten</code> to flat the list of lists of boards in a list of boards.</p>
+<h2>Conclusions</h2>
+<p>In this article I shown in a nutshell how to use <em>Dysfunctional</em> to develop real-world Java application in a purely functional style. Some may think that the proposed solutions, in addition to being less efficient, are also unnecessarily more complex than the respective imperative versions. Those who know how important it is write clear, maintainable, flexible and testable, will be greatly appreciated.<br />
+In my opinion, the beauty in the implementation of N-queens is that you can easily test not only the whole algorithm, but also its individual components independently. It is also easy to change the behavior (within certain limits) by simply configuring the components appropriately.<br />
+For example, to change the way in which the queen moves is sufficient to provide a different set of possible moves, or reimplement the <code>Mover</code>; to work on a rectangular board just give a different set of columns at the <code>PlaceNextQueens</code>; you can reimplementing the manner in which the piece is considered safe; etc.</p>
+<p>Of course there are many alternative libraries, I can quote <a href="http://functionaljava.org/">functionaljava</a>, <a href="http://code.google.com/p/guava-libraries/">guava</a>, <a href="http://code.google.com/p/lambdaj/">lambdaj</a>, <a href="http://www.fun4j.org/">fun4j</a> e <a href="http://code.google.com/p/totallylazy/">totallylazy</a>. </p>
+<p>The choice is yours!</p>
 
     <!-- AddThis Button BEGIN -->
     <div class="addthis_toolbox addthis_default_style addthis_16x16_style">
@@ -46,7 +212,7 @@
 <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
     var disqus_shortname = 'maurocchi';
-    var disqus_identifier = '';
+    var disqus_identifier = '/2013/01/the-n-queens-problem.htm';
 
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function() {

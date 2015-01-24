@@ -67,7 +67,7 @@ class Target:
         with open(fullname, "w") as f:
             f.write(content.encode('utf-8'))
 
-class Post:
+class Post(object):
     def __init__(self, previewHtml, html, meta):
         self.previewHtml = previewHtml
         self.html = html
@@ -100,7 +100,7 @@ class PostsRepository:
         preview_html = md.convert(preview_source)
         return Post(preview_html, html, meta)
 
-class Page:
+class Page(object):
     def __init__(self, html, meta):
         self.html = html
         self.title = ' '.join(meta['title'])
