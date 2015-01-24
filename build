@@ -1,29 +1,61 @@
-#!/usr/bin/env python 
+#!/usr/bin/env python
+#
+# The MIT License (MIT)
+
+# Copyright (c) 2015 Mauro Rocchi
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+from datetime import datetime
+from distutils import dir_util
+import os
+import re
+
 from markdown import Markdown
 from pystache import Renderer
-from datetime import datetime
-import os
-
-SITE_NAME = "maurocchi.github.io"
-MD = Markdown(extensions=['extra','meta','codehilite'])
-
-def read(filename):
-    with open(filename, "r") as f:
-        return f.read().decode('utf-8')
-
-def write(filename, content):
-    with open(filename, "w") as f:
-        f.write(content.encode('utf-8'))
 
 def urlize(title):
-    import re
     return re.sub(r'[^a-zA-Z0-9]+', '-', title.lower().strip())
 
-##
-# Post
-##
+class Source:
+    def __init__(self, root):
+        self.root = root
 
-class Post(object):
+    def get_all_names(self):
+        return os.listdir(self.root)
+
+    def read(self, name):
+        with open(name, "r") as f:
+            return f.read().decode('utf-8')
+
+class Target:
+    def __init__(self, root):
+        self.root = root
+
+    def write(self, filename, content):
+        fullname = os.path.join(self.root, filename)
+        fulldir, _ = os.path.split(fullname)
+        dir_util.mkpath(fulldir)
+        with open(fullname, "w") as f:
+            f.write(content.encode('utf-8'))
+
+class Post:
     def __init__(self, previewHtml, html, meta):
         self.previewHtml = previewHtml
         self.html = html
@@ -32,73 +64,77 @@ class Post(object):
         self.dateAsString = self.date.strftime("%d %B %Y")
         self.permalink = "/%d/%02d/%s.htm" % (self.date.year, self.date.month, urlize(self.title))
         self.hasMore = self.previewHtml != self.html
+        self.visible = meta.get('ignore', 'false') == 'false'
 
-def readPost(name):
-    fullname = '_posts/%s' % name
-    source = read(fullname)
-    html = MD.convert(source)
-    meta = MD.Meta
-    moreIndex = source.find('<!-- more -->')
-    if moreIndex == -1:
-        previewSource = source
-    else:
-        previewSource = source[:moreIndex]
-    previewHtml = MD.convert(previewSource)
-    MD.reset()
-    return Post(previewHtml, html, meta)
+class PostsRepository:
+    def __init__(self, source):
+        self.source = source
 
-posts = [readPost(name) for name in os.listdir('_posts')]
-posts.sort(key=lambda p: p.date, reverse=True)
+    def read_all(self):
+        posts = filter(lambda p: p.visible, [self.read_post(name) for name in self.source.get_all_names()])
+        posts.sort(key=lambda p: p.date, reverse=True)
+        return posts
 
-##
-# Page
-##
+    def read_post(self, name):
+        fullname = '_posts/%s' % name
+        content = self.source.read(fullname)
+        html = md.convert(content)
+        meta = md.Meta
+        more_index = content.find('<!-- more -->')
+        if more_index == -1:
+            preview_source = content
+        else:
+            preview_source = content[:more_index]
+        preview_html = md.convert(preview_source)
+        return Post(preview_html, html, meta)
 
-class Page(object):
+class Page:
     def __init__(self, html, meta):
         self.html = html
         self.title = ' '.join(meta['title'])
         self.permalink = "/%s.htm" % (urlize(self.title))
 
-def readPage(name):
-    fullname = '_pages/%s' % name
-    source = read(fullname)
-    html = MD.convert(source)
-    meta = MD.Meta
-    MD.reset()
-    return Page(html, meta)
+class PagesRepository:
+    def __init__(self, source):
+        self.source = source
 
-pages = [readPage(name) for name in os.listdir('_pages')]
-pages.sort(key=lambda p: p.title)
+    def read_all(self):
+        pages = [self.read_page(name) for name in self.source.get_all_names()]
+        pages.sort(key=lambda p: p.title)
+        return pages
 
-##
-# Build
-##
+    def read_page(self, name):
+        fullname = '_pages/%s' % name
+        content = self.source.read(fullname)
+        html = md.convert(content)
+        meta = md.Meta
+        md.reset()
+        return Page(html, meta)
 
-renderer = Renderer(search_dirs='_views')
+class View:
+    def __init__(self):
+        self.renderer = Renderer(search_dirs='_views')
 
-def renderLayout(layout, viewName, context):
-    title = context.title if hasattr(context, 'title') else None
-    body = renderer.render_name(viewName, context)
-    return renderer.render_name(layout, {
-        'title': title,
-        'body': body,
-        'posts': posts,
-        'pages': pages
-    })
+    def render(self, layout_name, view_name, context):
+        title = context.title if hasattr(context, 'title') else None
+        body = self.renderer.render_name(view_name, context)
+        return self.renderer.render_name(layout_name, {
+            'title': title,
+            'body': body,
+            'posts': posts,
+            'pages': pages
+        })
 
-# index.htm
-index = renderLayout('layout_two_columns', 'index', { 'posts': posts })
-write('index.htm', index)
-
-for post in posts:
-    html = renderLayout('layout_one_column', 'post', post)
-    path = post.permalink[1:]
-    fulldir, name = os.path.split(path)
-    if not os.path.exists(fulldir):
-        os.makedirs(fulldir)
-    write(path, html)
-
-for page in pages:
-    html = renderLayout('layout_two_columns', 'page', page)
-    write(page.permalink[1:], html)
+if __name__ == '__main__':
+    md = Markdown(extensions=['extra', 'meta', 'codehilite'])
+    posts = PostsRepository(Source('_posts')).read_all()
+    pages = PagesRepository(Source('_pages')).read_all()
+    view = View()
+    target = Target('.')
+    target.write('index.htm', view.render('layout_two_columns', 'index', {'posts': posts}))
+    for post in posts:
+        path = post.permalink[1:]
+        target.write(path, view.render('layout_one_column', 'post', post))
+    for page in pages:
+        path = page.permalink[1:]
+        target.write(path, view.render('layout_two_columns', 'page', page))

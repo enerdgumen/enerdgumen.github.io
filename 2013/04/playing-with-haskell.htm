@@ -24,194 +24,11 @@
 </header>
 <article class="content">
     <header>
-        <h1>Playing with Haskell</h1>
-        <div class="meta">Written by <strong>Mauro Rocchi</strong> on 15 April 2013</div>
+        <h1></h1>
+        <div class="meta">Written by <strong>Mauro Rocchi</strong> on </div>
     </header>
 
-    <p>Have you ever written a program to calculate the symbolic <a href="http://en.wikipedia.org/wiki/Derivative">derivative</a> for a given function? I've tried to solve this problem with Haskell and the result is very simple and smart.</p>
-<p>First at all, let's define the data structures representing the math terms:</p>
-<div class="codehilite"><pre><span class="kr">data</span> <span class="kt">Term</span> <span class="ow">=</span> <span class="kt">Const</span> <span class="kt">Integer</span> <span class="o">|</span> <span class="kt">Variable</span> <span class="kt">String</span> <span class="o">|</span>
-            <span class="kt">Add</span> <span class="kt">Term</span> <span class="kt">Term</span> <span class="o">|</span> <span class="kt">Mul</span> <span class="kt">Term</span> <span class="kt">Term</span> <span class="o">|</span>
-            <span class="kt">Div</span> <span class="kt">Term</span> <span class="kt">Term</span> <span class="o">|</span> <span class="kt">Pow</span> <span class="kt">Term</span> <span class="kt">Term</span> <span class="o">|</span>
-            <span class="kt">Sin</span> <span class="kt">Term</span> <span class="o">|</span> <span class="kt">Cos</span> <span class="kt">Term</span> <span class="o">|</span> <span class="kt">Tan</span> <span class="kt">Term</span> <span class="o">|</span> <span class="kt">Ln</span> <span class="kt">Term</span>
-  <span class="kr">deriving</span><span class="p">(</span><span class="kt">Eq</span><span class="p">)</span>
-</pre></div>
-
-
-<p>Assuming to have the functions <code>add x y</code>, <code>mul x y</code>, etc., we can define the derivative functions implementing the math rules:</p>
-<div class="codehilite"><pre><span class="nf">derive</span> <span class="p">(</span><span class="kt">Variable</span> <span class="n">u</span><span class="p">)</span> <span class="p">(</span><span class="kt">Variable</span> <span class="n">v</span><span class="p">)</span> <span class="ow">=</span> <span class="kt">Const</span> <span class="p">(</span><span class="kr">if</span> <span class="n">u</span> <span class="o">==</span> <span class="n">v</span> <span class="kr">then</span> <span class="mi">1</span> <span class="kr">else</span> <span class="mi">0</span><span class="p">)</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Const</span> <span class="kr">_</span><span class="p">)</span> <span class="kr">_</span> <span class="ow">=</span> <span class="n">zero</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Add</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">v</span> <span class="ow">=</span> <span class="n">add</span> <span class="p">(</span><span class="n">derive</span> <span class="n">x</span> <span class="n">v</span><span class="p">)</span> <span class="p">(</span><span class="n">derive</span> <span class="n">y</span> <span class="n">v</span><span class="p">)</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Mul</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">v</span> <span class="ow">=</span> <span class="n">add</span> <span class="p">(</span><span class="n">mul</span> <span class="p">(</span><span class="n">derive</span> <span class="n">x</span> <span class="n">v</span><span class="p">)</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="p">(</span><span class="n">derive</span> <span class="n">y</span> <span class="n">v</span><span class="p">))</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">v</span> <span class="ow">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">mul</span> <span class="n">y</span> <span class="p">(</span><span class="n">pow</span> <span class="n">x</span> <span class="p">(</span><span class="n">sub</span> <span class="n">y</span> <span class="n">one</span><span class="p">)))</span> <span class="p">(</span><span class="n">derive</span> <span class="n">x</span> <span class="n">v</span><span class="p">)</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Div</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">v</span> <span class="ow">=</span> <span class="n">divide</span> <span class="p">(</span><span class="n">sub</span> <span class="p">(</span><span class="n">mul</span> <span class="p">(</span><span class="n">derive</span> <span class="n">x</span> <span class="n">v</span><span class="p">)</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="p">(</span><span class="n">derive</span> <span class="n">y</span> <span class="n">v</span><span class="p">)))</span> <span class="p">(</span><span class="n">pow</span> <span class="n">y</span> <span class="n">two</span><span class="p">)</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Sin</span> <span class="n">x</span><span class="p">)</span>   <span class="n">v</span> <span class="ow">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">cos</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="n">derive</span> <span class="n">x</span> <span class="n">v</span><span class="p">)</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Cos</span> <span class="n">x</span><span class="p">)</span>   <span class="n">v</span> <span class="ow">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">neg</span> <span class="p">(</span><span class="n">sin</span> <span class="n">x</span><span class="p">))</span> <span class="p">(</span><span class="n">derive</span> <span class="n">x</span> <span class="n">v</span><span class="p">)</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Tan</span> <span class="n">x</span><span class="p">)</span>   <span class="n">v</span> <span class="ow">=</span> <span class="n">derive</span> <span class="p">(</span><span class="kt">Div</span> <span class="p">(</span><span class="n">sin</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="n">cos</span> <span class="n">x</span><span class="p">))</span> <span class="n">v</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="kt">Ln</span> <span class="n">x</span><span class="p">)</span>    <span class="n">v</span> <span class="ow">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">inv</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="n">derive</span> <span class="n">x</span> <span class="n">v</span><span class="p">)</span>
-</pre></div>
-
-
-<!-- more -->
-
-<p>Hence let's create the math term constructors based on the relative operations applying some simplification strategies:</p>
-<div class="codehilite"><pre><span class="kr">import</span> <span class="nn">Prelude</span> <span class="k">hiding</span> <span class="p">(</span><span class="nf">sin</span><span class="p">,</span> <span class="nf">cos</span><span class="p">,</span> <span class="nf">tan</span><span class="p">)</span>
-
-<span class="cm">{- Some constants -}</span>
-
-<span class="nf">zero</span>    <span class="ow">=</span> <span class="kt">Const</span> <span class="mi">0</span>
-<span class="nf">one</span>     <span class="ow">=</span> <span class="kt">Const</span> <span class="mi">1</span>
-<span class="nf">one_neg</span> <span class="ow">=</span> <span class="kt">Const</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-<span class="nf">two</span>     <span class="ow">=</span> <span class="kt">Const</span> <span class="mi">2</span>
-
-<span class="cm">{- Simple functions -}</span>
-
-<span class="nf">neg</span> <span class="n">x</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">one_neg</span> <span class="n">x</span>
-<span class="nf">inv</span> <span class="n">x</span> <span class="ow">=</span> <span class="n">divide</span> <span class="n">one</span> <span class="n">x</span>
-<span class="nf">inc</span> <span class="n">x</span> <span class="ow">=</span> <span class="n">add</span> <span class="n">x</span> <span class="n">one</span>
-<span class="nf">dec</span> <span class="n">x</span> <span class="ow">=</span> <span class="n">sub</span> <span class="n">x</span> <span class="n">one</span>
-
-<span class="cm">{- Addition -}</span>
-
-<span class="nf">add</span> <span class="p">(</span><span class="kt">Const</span> <span class="n">n</span><span class="p">)</span> <span class="p">(</span><span class="kt">Const</span> <span class="n">m</span><span class="p">)</span>   <span class="ow">=</span> <span class="kt">Const</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">m</span><span class="p">)</span>
-<span class="nf">add</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">0</span><span class="p">)</span> <span class="n">y</span>           <span class="ow">=</span> <span class="n">y</span>       <span class="c1">-- 0 + y = y</span>
-<span class="nf">add</span> <span class="n">x</span>         <span class="n">y</span><span class="o">@</span><span class="p">(</span><span class="kt">Const</span> <span class="n">m</span><span class="p">)</span> <span class="ow">=</span> <span class="n">add</span> <span class="n">y</span> <span class="n">x</span> <span class="c1">-- x + m = m + x</span>
-
-<span class="nf">add</span> <span class="p">(</span><span class="kt">Add</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>         <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">add</span> <span class="n">y</span> <span class="p">(</span><span class="n">add</span> <span class="n">x</span> <span class="n">x</span><span class="p">)</span> <span class="c1">-- (x + y) + x = y + (x + x)</span>
-                        <span class="o">|</span> <span class="n">y</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">add</span> <span class="n">x</span> <span class="p">(</span><span class="n">add</span> <span class="n">y</span> <span class="n">y</span><span class="p">)</span> <span class="c1">-- (x + y) + y = x + (y + y)</span>
-<span class="nf">add</span> <span class="n">x</span>         <span class="p">(</span><span class="kt">Add</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">add</span> <span class="n">z</span> <span class="p">(</span><span class="n">add</span> <span class="n">x</span> <span class="n">x</span><span class="p">)</span> <span class="c1">-- x + (x + z) = z + (x + x)</span>
-                        <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">add</span> <span class="n">y</span> <span class="p">(</span><span class="n">add</span> <span class="n">x</span> <span class="n">x</span><span class="p">)</span> <span class="c1">-- x + (y + x) = y + (x + x)</span>
-                        <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">=</span> <span class="n">add</span> <span class="p">(</span><span class="n">add</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>
-
-<span class="nf">add</span> <span class="p">(</span><span class="kt">Mul</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="kt">Mul</span> <span class="n">w</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">w</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">x</span> <span class="p">(</span><span class="n">add</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="c1">-- xy + xz = x(y + z)</span>
-                        <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">x</span> <span class="p">(</span><span class="n">add</span> <span class="n">y</span> <span class="n">w</span><span class="p">)</span>
-                        <span class="o">|</span> <span class="n">y</span> <span class="o">==</span> <span class="n">w</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">y</span> <span class="p">(</span><span class="n">add</span> <span class="n">x</span> <span class="n">z</span><span class="p">)</span>
-                        <span class="o">|</span> <span class="n">y</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">y</span> <span class="p">(</span><span class="n">add</span> <span class="n">x</span> <span class="n">w</span><span class="p">)</span> <span class="c1">-- xy = wy = y(x + w)</span>
-<span class="nf">add</span> <span class="n">x</span>         <span class="p">(</span><span class="kt">Mul</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">x</span> <span class="p">(</span><span class="n">inc</span> <span class="n">z</span><span class="p">)</span>
-                        <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">x</span> <span class="p">(</span><span class="n">inc</span> <span class="n">y</span><span class="p">)</span>
-<span class="nf">add</span> <span class="p">(</span><span class="kt">Mul</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>         <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">z</span> <span class="p">(</span><span class="n">inc</span> <span class="n">y</span><span class="p">)</span>
-                        <span class="o">|</span> <span class="n">y</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">z</span> <span class="p">(</span><span class="n">inc</span> <span class="n">x</span><span class="p">)</span>
-
-<span class="nf">add</span> <span class="n">x</span>           <span class="p">(</span><span class="kt">Div</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="ow">=</span> <span class="n">divide</span> <span class="p">(</span><span class="n">add</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="n">z</span><span class="p">)</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>
-<span class="nf">add</span> <span class="n">t</span><span class="o">@</span><span class="p">(</span><span class="kt">Div</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>         <span class="ow">=</span> <span class="n">add</span> <span class="n">z</span> <span class="n">t</span>
-
-<span class="nf">add</span> <span class="p">(</span><span class="kt">Pow</span> <span class="p">(</span><span class="kt">Sin</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">2</span><span class="p">))</span> <span class="p">(</span><span class="kt">Pow</span> <span class="p">(</span><span class="kt">Cos</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">2</span><span class="p">))</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">one</span> <span class="c1">-- sin(x)^2 + cos(x)^2 = 1</span>
-<span class="nf">add</span> <span class="p">(</span><span class="kt">Pow</span> <span class="p">(</span><span class="kt">Cos</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">2</span><span class="p">))</span> <span class="p">(</span><span class="kt">Pow</span> <span class="p">(</span><span class="kt">Sin</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">2</span><span class="p">))</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">one</span> <span class="c1">-- cos(x)^2 + sin(x)^2 = 1</span>
-
-<span class="nf">add</span> <span class="n">x</span> <span class="n">y</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>    <span class="ow">=</span> <span class="n">mul</span> <span class="n">two</span> <span class="n">x</span> <span class="c1">-- x + x = 2x</span>
-        <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">=</span> <span class="kt">Add</span> <span class="n">x</span> <span class="n">y</span>
-
-<span class="cm">{- Subtraction -}</span>
-
-<span class="nf">sub</span> <span class="n">x</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">add</span> <span class="n">x</span> <span class="p">(</span><span class="n">neg</span> <span class="n">y</span><span class="p">)</span>
-
-<span class="cm">{- Multiplication -}</span>
-
-<span class="nf">mul</span> <span class="p">(</span><span class="kt">Const</span> <span class="n">n</span><span class="p">)</span> <span class="p">(</span><span class="kt">Const</span> <span class="n">m</span><span class="p">)</span>   <span class="ow">=</span> <span class="kt">Const</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">m</span><span class="p">)</span>
-<span class="nf">mul</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">_</span>           <span class="ow">=</span> <span class="n">zero</span> <span class="c1">-- 0*x = 0</span>
-<span class="nf">mul</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">1</span><span class="p">)</span> <span class="n">y</span>           <span class="ow">=</span> <span class="n">y</span>    <span class="c1">-- 1*x = x</span>
-<span class="nf">mul</span> <span class="n">x</span>         <span class="n">y</span><span class="o">@</span><span class="p">(</span><span class="kt">Const</span> <span class="n">m</span><span class="p">)</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">y</span> <span class="n">x</span>
-
-<span class="nf">mul</span> <span class="p">(</span><span class="kt">Mul</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">y</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="n">z</span><span class="p">)</span>
-                <span class="o">|</span> <span class="n">y</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">x</span> <span class="p">(</span><span class="n">mul</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span>
-<span class="nf">mul</span> <span class="n">x</span> <span class="p">(</span><span class="kt">Mul</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">z</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span>
-                <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">y</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="n">z</span><span class="p">)</span>
-                <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">=</span> <span class="n">mul</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>
-
-<span class="nf">mul</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">w</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">w</span> <span class="ow">=</span> <span class="n">pow</span> <span class="n">x</span> <span class="p">(</span><span class="n">add</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span>
-<span class="nf">mul</span> <span class="n">x</span>         <span class="p">(</span><span class="kt">Pow</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">pow</span> <span class="n">x</span> <span class="p">(</span><span class="n">inc</span> <span class="n">z</span><span class="p">)</span>
-<span class="nf">mul</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>         <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">pow</span> <span class="n">x</span> <span class="p">(</span><span class="n">inc</span> <span class="n">y</span><span class="p">)</span>
-
-<span class="nf">mul</span> <span class="p">(</span><span class="kt">Div</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>         <span class="o">|</span> <span class="n">y</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">x</span>
-                        <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">=</span> <span class="n">divide</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="n">z</span><span class="p">)</span> <span class="n">y</span>
-<span class="nf">mul</span> <span class="n">x</span>         <span class="p">(</span><span class="kt">Div</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">y</span>
-                        <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">=</span> <span class="n">divide</span> <span class="p">(</span><span class="n">mul</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>
-
-<span class="nf">mul</span> <span class="n">x</span> <span class="n">y</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span>    <span class="ow">=</span> <span class="n">pow</span> <span class="n">x</span> <span class="n">two</span>
-        <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">=</span> <span class="kt">Mul</span> <span class="n">x</span> <span class="n">y</span>
-
-<span class="cm">{- Division -}</span>
-
-<span class="nf">divide</span> <span class="p">(</span><span class="kt">Const</span> <span class="n">n</span><span class="p">)</span> <span class="p">(</span><span class="kt">Const</span> <span class="n">m</span><span class="p">)</span> <span class="ow">=</span> <span class="n">divide</span> <span class="p">(</span><span class="kt">Const</span> <span class="p">(</span><span class="n">div</span> <span class="n">n</span> <span class="n">d</span><span class="p">))</span> <span class="p">(</span><span class="kt">Const</span> <span class="p">(</span><span class="n">div</span> <span class="n">m</span> <span class="n">d</span><span class="p">))</span> <span class="kr">where</span> <span class="n">d</span> <span class="ow">=</span> <span class="n">gcd</span> <span class="n">n</span> <span class="n">m</span>
-<span class="nf">divide</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">_</span>         <span class="ow">=</span> <span class="n">zero</span>
-<span class="nf">divide</span> <span class="n">x</span>         <span class="p">(</span><span class="kt">Const</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">=</span> <span class="n">x</span>
-
-<span class="nf">divide</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">w</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">w</span> <span class="ow">=</span> <span class="n">pow</span> <span class="n">x</span> <span class="p">(</span><span class="n">sub</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span>
-<span class="nf">divide</span> <span class="n">x</span>         <span class="p">(</span><span class="kt">Pow</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">pow</span> <span class="n">x</span> <span class="p">(</span><span class="n">dec</span> <span class="n">z</span><span class="p">)</span>
-<span class="nf">divide</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>         <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">z</span> <span class="ow">=</span> <span class="n">pow</span> <span class="n">x</span> <span class="p">(</span><span class="n">dec</span> <span class="n">y</span><span class="p">)</span>
-
-<span class="nf">divide</span> <span class="p">(</span><span class="kt">Div</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">z</span>         <span class="ow">=</span> <span class="n">divide</span> <span class="n">x</span> <span class="p">(</span><span class="n">mul</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span>
-<span class="nf">divide</span> <span class="n">x</span>         <span class="p">(</span><span class="kt">Div</span> <span class="n">y</span> <span class="n">z</span><span class="p">)</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">x</span> <span class="p">(</span><span class="n">divide</span> <span class="n">z</span> <span class="n">y</span><span class="p">)</span>
-
-<span class="nf">divide</span> <span class="p">(</span><span class="kt">Sin</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="kt">Cos</span> <span class="n">y</span><span class="p">)</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">tan</span> <span class="n">x</span>
-
-<span class="nf">divide</span> <span class="n">x</span> <span class="n">y</span> <span class="o">|</span> <span class="n">x</span> <span class="o">==</span> <span class="n">y</span> <span class="ow">=</span> <span class="n">one</span>
-           <span class="o">|</span> <span class="n">otherwise</span> <span class="ow">=</span> <span class="kt">Div</span> <span class="n">x</span> <span class="n">y</span>
-
-<span class="cm">{- Exponentiation -}</span>
-
-<span class="nf">pow</span> <span class="p">(</span><span class="kt">Const</span> <span class="n">n</span><span class="p">)</span> <span class="p">(</span><span class="kt">Const</span> <span class="n">m</span><span class="p">)</span> <span class="ow">=</span> <span class="kt">Const</span> <span class="p">(</span><span class="n">n</span> <span class="o">^</span> <span class="n">m</span><span class="p">)</span>
-<span class="nf">pow</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">0</span><span class="p">)</span> <span class="kr">_</span> <span class="ow">=</span> <span class="n">zero</span>
-<span class="nf">pow</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">1</span><span class="p">)</span> <span class="kr">_</span> <span class="ow">=</span> <span class="n">one</span>
-<span class="nf">pow</span> <span class="kr">_</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">=</span> <span class="n">one</span>
-<span class="nf">pow</span> <span class="n">x</span> <span class="p">(</span><span class="kt">Const</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">=</span> <span class="n">x</span>
-<span class="nf">pow</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="n">w</span> <span class="ow">=</span> <span class="n">pow</span> <span class="n">x</span> <span class="p">(</span><span class="n">mul</span> <span class="n">y</span> <span class="n">w</span><span class="p">)</span> <span class="c1">-- (x^y)^w = x^(y*w)</span>
-<span class="nf">pow</span> <span class="n">x</span> <span class="n">y</span> <span class="ow">=</span> <span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span>
-
-<span class="cm">{- Trascendental functions -}</span>
-
-<span class="nf">sin</span> <span class="n">x</span> <span class="ow">=</span> <span class="kt">Sin</span> <span class="n">x</span>
-<span class="nf">cos</span> <span class="n">x</span> <span class="ow">=</span> <span class="kt">Cos</span> <span class="n">x</span>
-<span class="nf">tan</span> <span class="n">x</span> <span class="ow">=</span> <span class="kt">Tan</span> <span class="n">x</span>
-
-<span class="nf">ln</span> <span class="p">(</span><span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="ow">=</span> <span class="n">mul</span> <span class="n">y</span> <span class="p">(</span><span class="n">ln</span> <span class="n">x</span><span class="p">)</span>
-<span class="nf">ln</span> <span class="p">(</span><span class="kt">Mul</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="ow">=</span> <span class="n">add</span> <span class="p">(</span><span class="n">ln</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="n">ln</span> <span class="n">y</span><span class="p">)</span>
-<span class="nf">ln</span> <span class="p">(</span><span class="kt">Div</span> <span class="n">x</span> <span class="n">y</span><span class="p">)</span> <span class="ow">=</span> <span class="n">sub</span> <span class="p">(</span><span class="n">ln</span> <span class="n">x</span><span class="p">)</span> <span class="p">(</span><span class="n">ln</span> <span class="n">y</span><span class="p">)</span>
-<span class="nf">ln</span> <span class="n">x</span> <span class="ow">=</span> <span class="kt">Ln</span> <span class="n">x</span>
-</pre></div>
-
-
-<p>First to test it, we implement the method to show an expression in a more concise way.</p>
-<div class="codehilite"><pre><span class="kr">instance</span> <span class="kt">Show</span> <span class="kt">Term</span> <span class="kr">where</span>
- <span class="n">showsPrec</span> <span class="kr">_</span> <span class="ow">=</span> <span class="n">showTerm</span>
-  <span class="kr">where</span>
-    <span class="n">showTerm</span> <span class="n">t</span> <span class="ow">=</span> <span class="kr">case</span> <span class="n">t</span> <span class="kr">of</span>
-      <span class="kt">Const</span> <span class="n">n</span> <span class="ow">-&gt;</span> <span class="n">shows</span> <span class="n">n</span>
-      <span class="kt">Variable</span> <span class="n">u</span> <span class="ow">-&gt;</span> <span class="n">showString</span> <span class="n">u</span>
-      <span class="kt">Add</span> <span class="n">x</span> <span class="n">y</span> <span class="ow">-&gt;</span> <span class="n">parenthesize</span> <span class="n">brace</span> <span class="n">t</span> <span class="n">x</span> <span class="o">.</span> <span class="n">showString</span> <span class="s">&quot;+&quot;</span> <span class="o">.</span> <span class="n">parenthesize</span> <span class="n">brace</span> <span class="n">t</span> <span class="n">y</span>
-      <span class="kt">Mul</span> <span class="n">x</span> <span class="n">y</span> <span class="ow">-&gt;</span> <span class="n">parenthesize</span> <span class="n">brace</span> <span class="n">t</span> <span class="n">x</span> <span class="o">.</span> <span class="n">showString</span> <span class="s">&quot;*&quot;</span> <span class="o">.</span> <span class="n">parenthesize</span> <span class="n">brace</span> <span class="n">t</span> <span class="n">y</span>
-      <span class="kt">Div</span> <span class="n">x</span> <span class="n">y</span> <span class="ow">-&gt;</span> <span class="n">parenthesize</span> <span class="n">brace</span> <span class="n">t</span> <span class="n">x</span> <span class="o">.</span> <span class="n">showString</span> <span class="s">&quot;/&quot;</span> <span class="o">.</span> <span class="n">parenthesize</span> <span class="n">brace</span> <span class="n">t</span> <span class="n">y</span>
-      <span class="kt">Pow</span> <span class="n">x</span> <span class="n">y</span> <span class="ow">-&gt;</span> <span class="n">parenthesize</span> <span class="n">brace</span> <span class="n">t</span> <span class="n">x</span> <span class="o">.</span> <span class="n">showString</span> <span class="s">&quot;^&quot;</span> <span class="o">.</span> <span class="n">parenthesize</span> <span class="n">brace</span> <span class="n">t</span> <span class="n">y</span>
-      <span class="kt">Sin</span> <span class="n">x</span> <span class="ow">-&gt;</span> <span class="n">showFunction</span> <span class="s">&quot;sin&quot;</span> <span class="n">t</span> <span class="n">x</span>
-      <span class="kt">Cos</span> <span class="n">x</span> <span class="ow">-&gt;</span> <span class="n">showFunction</span> <span class="s">&quot;cos&quot;</span> <span class="n">t</span> <span class="n">x</span>
-      <span class="kt">Tan</span> <span class="n">x</span> <span class="ow">-&gt;</span> <span class="n">showFunction</span> <span class="s">&quot;tan&quot;</span> <span class="n">t</span> <span class="n">x</span>
-      <span class="kt">Ln</span> <span class="n">x</span>  <span class="ow">-&gt;</span> <span class="n">showFunction</span> <span class="s">&quot;ln&quot;</span> <span class="n">t</span> <span class="n">x</span>
-    <span class="n">showFunction</span> <span class="n">name</span> <span class="n">t</span> <span class="n">x</span> <span class="ow">=</span> <span class="n">showString</span> <span class="n">name</span> <span class="o">.</span> <span class="n">round</span> <span class="n">x</span>
-
-    <span class="n">parenthesize</span> <span class="n">p</span> <span class="n">t</span> <span class="n">x</span> <span class="o">|</span> <span class="n">precedence</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="n">precedence</span> <span class="n">t</span> <span class="ow">=</span> <span class="n">p</span> <span class="n">x</span>
-                       <span class="o">|</span> <span class="n">otherwise</span>                   <span class="ow">=</span> <span class="n">shows</span> <span class="n">x</span>
-    <span class="n">round</span> <span class="n">t</span> <span class="ow">=</span> <span class="p">(</span><span class="sc">&#39;(&#39;</span><span class="kt">:</span><span class="p">)</span> <span class="o">.</span> <span class="n">shows</span> <span class="n">t</span> <span class="o">.</span> <span class="p">(</span><span class="sc">&#39;)&#39;</span><span class="kt">:</span><span class="p">)</span>
-    <span class="n">brace</span> <span class="n">t</span> <span class="ow">=</span> <span class="p">(</span><span class="sc">&#39;{&#39;</span><span class="kt">:</span><span class="p">)</span> <span class="o">.</span> <span class="n">shows</span> <span class="n">t</span> <span class="o">.</span> <span class="p">(</span><span class="sc">&#39;}&#39;</span><span class="kt">:</span><span class="p">)</span>
-
-    <span class="n">precedence</span> <span class="n">t</span> <span class="ow">=</span> <span class="kr">case</span> <span class="n">t</span> <span class="kr">of</span>
-      <span class="kt">Add</span> <span class="kr">_</span> <span class="kr">_</span>    <span class="ow">-&gt;</span> <span class="mi">1</span>
-      <span class="kt">Mul</span> <span class="kr">_</span> <span class="kr">_</span>    <span class="ow">-&gt;</span> <span class="mi">7</span>
-      <span class="kt">Div</span> <span class="kr">_</span> <span class="kr">_</span>    <span class="ow">-&gt;</span> <span class="mi">8</span>
-      <span class="kt">Pow</span> <span class="kr">_</span> <span class="kr">_</span>    <span class="ow">-&gt;</span> <span class="mi">10</span>
-      <span class="kt">Const</span> <span class="kr">_</span>    <span class="ow">-&gt;</span> <span class="mi">10</span>
-      <span class="kt">Variable</span> <span class="kr">_</span> <span class="ow">-&gt;</span> <span class="mi">10</span>
-      <span class="n">otherwise</span>  <span class="ow">-&gt;</span> <span class="mi">11</span>
-</pre></div>
-
-
-<p>Finally, testing the module you have:</p>
-<div class="codehilite"><pre><span class="nf">x</span> <span class="ow">=</span> <span class="kt">Variable</span> <span class="s">&quot;x&quot;</span>
-<span class="nf">y</span> <span class="ow">=</span> <span class="kt">Variable</span> <span class="s">&quot;y&quot;</span>
-
-<span class="nf">derive</span> <span class="p">(</span><span class="n">tan</span> <span class="n">x</span><span class="p">)</span> <span class="n">x</span>                                <span class="o">--&gt;</span> <span class="mi">1</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="n">tan</span> <span class="p">(</span><span class="n">ln</span> <span class="p">(</span><span class="n">pow</span> <span class="n">x</span> <span class="n">y</span><span class="p">)))</span> <span class="n">x</span>                   <span class="o">--&gt;</span> <span class="n">y</span><span class="o">/</span><span class="p">{</span><span class="n">x</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">y</span><span class="o">*</span><span class="n">ln</span><span class="p">(</span><span class="n">x</span><span class="p">))</span><span class="o">^</span><span class="mi">2</span><span class="p">}</span>
-<span class="nf">derive</span> <span class="p">(</span><span class="n">mul</span> <span class="p">(</span><span class="n">pow</span> <span class="p">(</span><span class="n">ln</span> <span class="n">x</span><span class="p">)</span> <span class="n">two</span><span class="p">)</span> <span class="p">(</span><span class="n">sin</span> <span class="p">(</span><span class="n">mul</span> <span class="n">y</span> <span class="n">x</span><span class="p">)))</span> <span class="n">x</span> <span class="o">--&gt;</span> <span class="p">{</span><span class="n">ln</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">^</span><span class="mi">2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">y</span><span class="o">*</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">y</span><span class="o">*</span><span class="n">x</span><span class="o">+</span><span class="mi">2</span><span class="o">*</span><span class="n">ln</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">y</span><span class="o">*</span><span class="n">x</span><span class="p">)}</span><span class="o">/</span><span class="n">x</span>
-</pre></div>
+    
 
     <!-- AddThis Button BEGIN -->
     <div class="addthis_toolbox addthis_default_style addthis_16x16_style">
@@ -228,8 +45,8 @@
 <div id="disqus_thread"></div>
 <script type="text/javascript">
     /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-    var disqus_shortname = 'maurocchi'; // required: replace example with your forum shortname
-    var disqus_identifier = '/2013/04/playing-with-haskell.htm';
+    var disqus_shortname = 'maurocchi';
+    var disqus_identifier = '';
 
     /* * * DON'T EDIT BELOW THIS LINE * * */
     (function() {
@@ -239,6 +56,7 @@
     })();
 </script>
 <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments</a>.</noscript>
+
 <footer>
     This content is distributed with 
     <a href="http://creativecommons.org/licenses/by-sa/4.0/">
