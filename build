@@ -67,20 +67,34 @@ class Target:
         with open(fullname, "w") as f:
             f.write(content.encode('utf-8'))
 
+class Reader:
+    def __init__(self):
+        self.md = Markdown(extensions=['extra', 'meta', 'codehilite'])
+
+    def html_and_metadata(self, content):
+        html = self.md.convert(content)
+        raw_meta = self.md.Meta
+        meta = {}
+        for name, values in raw_meta.iteritems():
+            meta[name] = ''.join(values)
+        self.md.reset()
+        return html, meta
+
 class Post(object):
     def __init__(self, previewHtml, html, meta):
         self.previewHtml = previewHtml
         self.html = html
-        self.title = ' '.join(meta['title'])
-        self.date = datetime.strptime(' '.join(meta['date']), "%Y-%m-%d %H:%M")
+        self.title = meta['title']
+        self.date = datetime.strptime(meta['date'], "%Y-%m-%d %H:%M")
         self.dateAsString = self.date.strftime("%d %B %Y")
         self.permalink = "/%d/%02d/%s.htm" % (self.date.year, self.date.month, urlize(self.title))
         self.hasMore = self.previewHtml != self.html
-        self.visible = meta.get('ignore', 'false') == 'false'
+        self.visible = meta.get('ignore', 'false') != 'true'
 
 class PostsRepository:
-    def __init__(self, source):
+    def __init__(self, source, reader):
         self.source = source
+        self.reader = reader
 
     def read_all(self):
         posts = filter(lambda p: p.visible, [self.read_post(name) for name in self.source.get_all_names()])
@@ -89,26 +103,25 @@ class PostsRepository:
 
     def read_post(self, name):
         content = self.source.read(name)
-        html = md.convert(content)
-        meta = md.Meta
-        md.reset()
+        html, meta = self.reader.html_and_metadata(content)
         more_index = content.find('<!-- more -->')
         if more_index == -1:
             preview_source = content
         else:
             preview_source = content[:more_index]
-        preview_html = md.convert(preview_source)
+        preview_html, _ = self.reader.html_and_metadata(preview_source)
         return Post(preview_html, html, meta)
 
 class Page(object):
     def __init__(self, html, meta):
         self.html = html
-        self.title = ' '.join(meta['title'])
+        self.title = meta['title']
         self.permalink = "/%s.htm" % (urlize(self.title))
 
 class PagesRepository:
-    def __init__(self, source):
+    def __init__(self, source, reader):
         self.source = source
+        self.reader = reader
 
     def read_all(self):
         pages = [self.read_page(name) for name in self.source.get_all_names()]
@@ -117,9 +130,7 @@ class PagesRepository:
 
     def read_page(self, name):
         content = self.source.read(name)
-        html = md.convert(content)
-        meta = md.Meta
-        md.reset()
+        html, meta = self.reader.html_and_metadata(content)
         return Page(html, meta)
 
 class View:
@@ -147,9 +158,9 @@ if __name__ == '__main__':
         target.copy_into('images')
         target.copy_into('favicon.png')
 
-    md = Markdown(extensions=['extra', 'meta', 'codehilite'])
-    posts = PostsRepository(Source('_posts')).read_all()
-    pages = PagesRepository(Source('_pages')).read_all()
+    reader = Reader()
+    posts = PostsRepository(Source('_posts'), reader).read_all()
+    pages = PagesRepository(Source('_pages'), reader).read_all()
     view = View({'deploy': deploy})
     target.write('index.htm', view.render('layout_two_columns', 'index', {'posts': posts}))
     for post in posts:
