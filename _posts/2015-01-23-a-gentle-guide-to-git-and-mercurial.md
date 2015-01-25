@@ -1,4 +1,4 @@
-title: A gentle introduction to Git and Mercurial
+title: A gentle guide to Git and Mercurial
 date: 2015-01-23 21:35
 tags: tools
 ignore: true
