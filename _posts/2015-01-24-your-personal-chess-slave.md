@@ -1,7 +1,7 @@
 title: Live chess with a real chessboard
 date: 2015-01-24 20:03
 tags: chess, java
-ignore: false
+ignore: true
 
 Playing chess in front at a screen is so bad, all poetry is lost!
 However play against a goog chess program or online is useful, so this is a simple idea: make a software to play chess with a computer with your real chessboard.

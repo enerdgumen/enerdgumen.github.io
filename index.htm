@@ -37,7 +37,6 @@
         <h1>Recent posts</h1>
         <ul>
             <li><a href="/2015/03/while-loops-in-a-functional-way.htm">While loops in a functional way</a></li>
-            <li><a href="/2015/01/live-chess-with-a-real-chessboard.htm">Live chess with a real chessboard</a></li>
             <li><a href="/2013/04/playing-with-haskell.htm">Playing with Haskell</a></li>
             <li><a href="/2013/02/monitoring-logs-with-sauron.htm">Monitoring logs with Sauron</a></li>
             <li><a href="/2013/01/the-n-queens-problem.htm">The N-queens problem</a></li>
@@ -148,51 +147,6 @@
     <span class="o">}</span>
 <span class="o">}</span>
 </pre></div>
-
-</article><article class="content">
-    <header>
-        <h1><a href="/2015/01/live-chess-with-a-real-chessboard.htm">Live chess with a real chessboard</a></h1>
-        <div class="meta">Written by <strong>Mauro Rocchi</strong> on 24 January 2015</div>
-    </header>
-
-    <p>Playing chess in front at a screen is so bad, all poetry is lost!
-However play against a goog chess program or online is useful, so this is a simple idea: make a software to play chess with a computer with your real chessboard.</p>
-<p>The software in outline should:
-<em> look out the screen for you, detect the opponent moves and pronunce them;
-</em> listen your voice, interprete what you tell and execute the move simulating your drag&amp;drop of the piece.</p>
-<p>This seems to be a slave, a <em>chesslave</em>.</p>
-<h2>Dev plan</h2>
-<p>The target is clear, so let's analyze the involved components.</p>
-<h3>The board recognizer</h3>
-<p>This component should detect a chessboard in the user desktop, observe its changes and get the moves done.</p>
-<p>It can be divided in three sub-problems:</p>
-<ol>
-<li>Find the region of an arbitrary chessboard displayed in the current screen.</li>
-<li>Given the image of the board, analyze it extracting the images of pieces and white/black squares.</li>
-</ol>
-<h3>The move reader</h3>
-<p>After have detected each opponent move the program should "read" the move for you pronouncing it on the speakers.</p>
-<h3>The move listener</h3>
-<p>When is you turn the software should listen your voice, interprete the sounds and recognise the move.</p>
-<h3>The move executor</h3>
-<p>After have received your move the program should execute it on the screen using simulating the use of the mouse.</p>
-<h3>The GUI</h3>
-<p>The user interface should show the state of the program, that is:</p>
-<ul>
-<li>the graphics of the board and the pieces recognized;</li>
-<li>the current status of the board;</li>
-<li>the turn.</li>
-</ul>
-<p>The user could perform the following operations:</p>
-<ul>
-<li>start a new game;</li>
-<li>pause the game;</li>
-<li>stop the game (the status is forgotten);</li>
-<li>force a new recognition (if the current state doesn't match with the effective state):</li>
-<li>force a turn switch.</li>
-</ul>
-<h3>The controller</h3>
-<p>The controller orchestrates the interaction of all components, alternating the input from the user with the input from the screen.</p>
 
 </article><article class="content">
     <header>
