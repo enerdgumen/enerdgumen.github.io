@@ -36,6 +36,8 @@
     <section class="posts">
         <h1>Recent posts</h1>
         <ul>
+            <li><a href="/2015/03/while-loops-in-a-functional-way.htm">While loops in a functional way</a></li>
+            <li><a href="/2015/01/live-chess-with-a-real-chessboard.htm">Live chess with a real chessboard</a></li>
             <li><a href="/2013/04/playing-with-haskell.htm">Playing with Haskell</a></li>
             <li><a href="/2013/02/monitoring-logs-with-sauron.htm">Monitoring logs with Sauron</a></li>
             <li><a href="/2013/01/the-n-queens-problem.htm">The N-queens problem</a></li>
@@ -46,6 +48,153 @@
 
 <section id="container">
 <article class="content">
+    <header>
+        <h1><a href="/2015/03/while-loops-in-a-functional-way.htm">While loops in a functional way</a></h1>
+        <div class="meta">Written by <strong>Mauro Rocchi</strong> on 24 March 2015</div>
+    </header>
+
+    <p>The following code shows a technics to implement while loops taking advantage of java Streams and functional programming.</p>
+<h2>Do/while loops</h2>
+<p>This is a classic do/while loop where the body is essentially a supplier of states:</p>
+<div class="codehilite"><pre><span class="n">T</span> <span class="n">state</span><span class="o">;</span>
+<span class="k">do</span> <span class="o">{</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">body</span><span class="o">();</span>
+<span class="o">}</span> <span class="k">while</span> <span class="o">(</span><span class="n">predicate</span><span class="o">(</span><span class="n">state</span><span class="o">));</span>
+</pre></div>
+
+
+<p>It is equivalent to the following code:</p>
+<div class="codehilite"><pre><span class="kd">final</span> <span class="n">T</span> <span class="n">endState</span> <span class="o">=</span> <span class="n">Stream</span><span class="o">.</span><span class="na">generate</span><span class="o">(</span><span class="n">body</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">predicate</span><span class="o">.</span><span class="na">negate</span><span class="o">())</span>
+    <span class="o">.</span><span class="na">findFirst</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">get</span><span class="o">();</span>
+</pre></div>
+
+
+<p>The stream will terminate when the current generated value hold the predicate in the filter clause, therefore such clause - used in this way - behaves as an "until" condition and must be negated.</p>
+<p>The stream is consumed invoking <code>findFirst</code>, at that point can happend two things:</p>
+<ol>
+<li>the stream terminates: <code>findFirst</code> returns an <code>Optional</code> containing the last state checked by the predicate, so the last state is always available;</li>
+<li>the stream doesn't terminate: unfortunately there's an infinite loop!</li>
+</ol>
+<h2>Stateful while loops</h2>
+<p>Sometimes the current state of a while loop depends from the previous state:</p>
+<div class="codehilite"><pre><span class="n">T</span> <span class="n">state</span> <span class="o">=</span> <span class="n">initial</span><span class="o">;</span>
+<span class="k">while</span> <span class="o">(</span><span class="n">predicate</span><span class="o">(</span><span class="n">state</span><span class="o">))</span> <span class="o">{</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">body</span><span class="o">(</span><span class="n">state</span><span class="o">);</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>The equivalent functional code is similar to the previous but it uses <code>iterate</code> to generate a chain of dependent states:</p>
+<div class="codehilite"><pre><span class="kd">final</span> <span class="n">T</span> <span class="n">endState</span> <span class="o">=</span> <span class="n">Stream</span><span class="o">.</span><span class="na">iterate</span><span class="o">(</span><span class="n">initial</span><span class="o">,</span> <span class="n">body</span><span class="o">)</span>
+    <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">predicate</span><span class="o">.</span><span class="na">negate</span><span class="o">())</span>
+    <span class="o">.</span><span class="na">findFirst</span><span class="o">()</span>
+    <span class="o">.</span><span class="na">get</span><span class="o">()</span>
+</pre></div>
+
+
+<h2>A little example</h2>
+<p>As a demonstration, suppose you have started a task to a remote service and you want monitor the operation getting the task status in polling. You want read the status with 10 tentatives before to declare the operation failed too.</p>
+<p>An imperative solution:</p>
+<div class="codehilite"><pre><span class="n">Outcome</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+    <span class="n">State</span> <span class="n">state</span><span class="o">;</span>
+    <span class="k">do</span> <span class="o">{</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">getTaskState</span><span class="o">();</span>
+    <span class="o">}</span> <span class="k">while</span> <span class="o">(!</span><span class="n">isCompleted</span><span class="o">(</span><span class="n">state</span><span class="o">));</span>
+    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="na">success</span> <span class="o">?</span> <span class="n">SUCCESS</span> <span class="o">:</span> <span class="n">FAILURE</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="n">State</span> <span class="nf">getTaskState</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kt">int</span> <span class="n">attempt</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="k">do</span> <span class="o">{</span>
+        <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+        <span class="k">try</span> <span class="o">{</span>
+            <span class="k">return</span> <span class="nf">readEffectiveTaskStatus</span><span class="o">(...);</span>
+        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+            <span class="c1">// log</span>
+        <span class="o">}</span>
+        <span class="n">attempt</span> <span class="o">+=</span> <span class="mi">1</span><span class="o">;</span>
+    <span class="o">}</span> <span class="k">while</span> <span class="o">(</span><span class="n">attempt</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="o">);</span>
+    <span class="k">return</span> <span class="n">State</span><span class="o">.</span><span class="na">failure</span><span class="o">();</span>
+<span class="o">}</span>
+</pre></div>
+
+
+<p>A functional alternative:</p>
+<div class="codehilite"><pre><span class="n">Outcome</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
+    <span class="kd">final</span> <span class="n">State</span> <span class="n">state</span> <span class="o">=</span> <span class="n">Stream</span><span class="o">.</span><span class="na">generate</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">getTaskState</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">isCompleted</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">findFirst</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">get</span><span class="o">();</span>
+    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="na">success</span> <span class="o">?</span> <span class="n">SUCCESS</span> <span class="o">:</span> <span class="n">FAILURE</span><span class="o">;</span>
+<span class="o">}</span>
+
+<span class="n">State</span> <span class="nf">getTaskState</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">return</span> <span class="n">Stream</span><span class="o">.</span><span class="na">generate</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">readEffectiveTaskStatus</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">limit</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="nl">Optional:</span><span class="o">:</span><span class="n">isPresent</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="nl">Optional:</span><span class="o">:</span><span class="n">get</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">findFirst</span><span class="o">()</span>
+        <span class="o">.</span><span class="na">orElse</span><span class="o">(</span><span class="n">State</span><span class="o">.</span><span class="na">failure</span><span class="o">());</span>
+<span class="o">}</span>
+
+<span class="n">Optional</span><span class="o">&lt;</span><span class="n">State</span><span class="o">&gt;</span> <span class="nf">readEffectiveTaskStatus</span><span class="o">()</span> <span class="o">{</span>
+    <span class="k">try</span> <span class="o">{</span>
+        <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
+        <span class="k">return</span> <span class="n">Optional</span><span class="o">.</span><span class="na">of</span><span class="o">(...);</span>
+    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
+        <span class="k">return</span> <span class="n">Optional</span><span class="o">.</span><span class="na">empty</span><span class="o">();</span>
+    <span class="o">}</span>
+<span class="o">}</span>
+</pre></div>
+
+</article><article class="content">
+    <header>
+        <h1><a href="/2015/01/live-chess-with-a-real-chessboard.htm">Live chess with a real chessboard</a></h1>
+        <div class="meta">Written by <strong>Mauro Rocchi</strong> on 24 January 2015</div>
+    </header>
+
+    <p>Playing chess in front at a screen is so bad, all poetry is lost!
+However play against a goog chess program or online is useful, so this is a simple idea: make a software to play chess with a computer with your real chessboard.</p>
+<p>The software in outline should:
+<em> look out the screen for you, detect the opponent moves and pronunce them;
+</em> listen your voice, interprete what you tell and execute the move simulating your drag&amp;drop of the piece.</p>
+<p>This seems to be a slave, a <em>chesslave</em>.</p>
+<h2>Dev plan</h2>
+<p>The target is clear, so let's analyze the involved components.</p>
+<h3>The board recognizer</h3>
+<p>This component should detect a chessboard in the user desktop, observe its changes and get the moves done.</p>
+<p>It can be divided in three sub-problems:</p>
+<ol>
+<li>Find the region of an arbitrary chessboard displayed in the current screen.</li>
+<li>Given the image of the board, analyze it extracting the images of pieces and white/black squares.</li>
+</ol>
+<h3>The move reader</h3>
+<p>After have detected each opponent move the program should "read" the move for you pronouncing it on the speakers.</p>
+<h3>The move listener</h3>
+<p>When is you turn the software should listen your voice, interprete the sounds and recognise the move.</p>
+<h3>The move executor</h3>
+<p>After have received your move the program should execute it on the screen using simulating the use of the mouse.</p>
+<h3>The GUI</h3>
+<p>The user interface should show the state of the program, that is:</p>
+<ul>
+<li>the graphics of the board and the pieces recognized;</li>
+<li>the current status of the board;</li>
+<li>the turn.</li>
+</ul>
+<p>The user could perform the following operations:</p>
+<ul>
+<li>start a new game;</li>
+<li>pause the game;</li>
+<li>stop the game (the status is forgotten);</li>
+<li>force a new recognition (if the current state doesn't match with the effective state):</li>
+<li>force a turn switch.</li>
+</ul>
+<h3>The controller</h3>
+<p>The controller orchestrates the interaction of all components, alternating the input from the user with the input from the screen.</p>
+
+</article><article class="content">
     <header>
         <h1><a href="/2013/04/playing-with-haskell.htm">Playing with Haskell</a></h1>
         <div class="meta">Written by <strong>Mauro Rocchi</strong> on 15 April 2013</div>
@@ -85,25 +234,25 @@
 
     <p><a href="http://github.com/maurocchi/sauron">Sauron</a> is a simple self-contained <em>Python</em> 2.3 script, without any dependency, useful to monitor errors on log files in real time from the command-line.</p>
 <p>By default it follows all log files in <code>/var/log</code> directory and shown the rows containing an "error" word (bad, cannot, error, exception, fail, fails, failed, failure, incorrect, invalid, unable, unexpected, wrong).</p>
-<div class="codehilite"><pre><span class="nv">$ </span>sauron <span class="o">[</span>options<span class="o">]</span> <span class="o">[</span>paths <span class="o">(</span>default /var/log<span class="o">)]</span>
+<div class="codehilite"><pre><span class="err">$</span> <span class="n">sauron</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">paths</span> <span class="p">(</span><span class="k">default</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="p">)]</span>
 
-Options:
-    -h, --help            show this <span class="nb">help </span>message and <span class="nb">exit</span>
-    -f FILENAME_REGEX, --files<span class="o">=</span>FILENAME_REGEX
-                          filename regex <span class="o">(</span>default <span class="s1">&#39;log$&#39;</span><span class="o">)</span>
-    -a, --all             the log file are followed from the begin
-    -w WORDS, --words<span class="o">=</span>WORDS
-                          comma-separed words which filters the lines <span class="o">(</span>default:
-                          error, exception, fail, fails, failed, failure,
-                          cannot, unable, unexpected, incorrect, invalid, bad,
-                          wrong<span class="o">)</span>
-    -r LINE_REGEX, --regex<span class="o">=</span>LINE_REGEX
-                          regex to filter the log lines <span class="o">(</span>it overwrites the
-                          --words option<span class="o">)</span>
-    -i CHECK_INTERVAL, --interval<span class="o">=</span>CHECK_INTERVAL
-                          interval in seconds before to scan again the paths
-                          <span class="o">(</span>default 1<span class="o">)</span>
-    --version
+<span class="nl">Options:</span>
+    <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="n">and</span> <span class="n">exit</span>
+    <span class="o">-</span><span class="n">f</span> <span class="n">FILENAME_REGEX</span><span class="p">,</span> <span class="o">--</span><span class="n">files</span><span class="o">=</span><span class="n">FILENAME_REGEX</span>
+                          <span class="n">filename</span> <span class="n">regex</span> <span class="p">(</span><span class="k">default</span> <span class="err">&#39;</span><span class="n">log</span><span class="err">$&#39;</span><span class="p">)</span>
+    <span class="o">-</span><span class="n">a</span><span class="p">,</span> <span class="o">--</span><span class="n">all</span>             <span class="n">the</span> <span class="n">log</span> <span class="n">file</span> <span class="n">are</span> <span class="n">followed</span> <span class="n">from</span> <span class="n">the</span> <span class="n">begin</span>
+    <span class="o">-</span><span class="n">w</span> <span class="n">WORDS</span><span class="p">,</span> <span class="o">--</span><span class="n">words</span><span class="o">=</span><span class="n">WORDS</span>
+                          <span class="n">comma</span><span class="o">-</span><span class="n">separed</span> <span class="n">words</span> <span class="n">which</span> <span class="n">filters</span> <span class="n">the</span> <span class="n">lines</span> <span class="p">(</span><span class="k">default</span><span class="o">:</span>
+                          <span class="n">error</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">fail</span><span class="p">,</span> <span class="n">fails</span><span class="p">,</span> <span class="n">failed</span><span class="p">,</span> <span class="n">failure</span><span class="p">,</span>
+                          <span class="n">cannot</span><span class="p">,</span> <span class="n">unable</span><span class="p">,</span> <span class="n">unexpected</span><span class="p">,</span> <span class="n">incorrect</span><span class="p">,</span> <span class="n">invalid</span><span class="p">,</span> <span class="n">bad</span><span class="p">,</span>
+                          <span class="n">wrong</span><span class="p">)</span>
+    <span class="o">-</span><span class="n">r</span> <span class="n">LINE_REGEX</span><span class="p">,</span> <span class="o">--</span><span class="n">regex</span><span class="o">=</span><span class="n">LINE_REGEX</span>
+                          <span class="n">regex</span> <span class="n">to</span> <span class="n">filter</span> <span class="n">the</span> <span class="n">log</span> <span class="n">lines</span> <span class="p">(</span><span class="n">it</span> <span class="n">overwrites</span> <span class="n">the</span>
+                          <span class="o">--</span><span class="n">words</span> <span class="n">option</span><span class="p">)</span>
+    <span class="o">-</span><span class="n">i</span> <span class="n">CHECK_INTERVAL</span><span class="p">,</span> <span class="o">--</span><span class="n">interval</span><span class="o">=</span><span class="n">CHECK_INTERVAL</span>
+                          <span class="n">interval</span> <span class="n">in</span> <span class="n">seconds</span> <span class="n">before</span> <span class="n">to</span> <span class="n">scan</span> <span class="n">again</span> <span class="n">the</span> <span class="n">paths</span>
+                          <span class="p">(</span><span class="k">default</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="o">--</span><span class="n">version</span>
 </pre></div>
 
 </article><article class="content">
@@ -123,7 +272,7 @@ I propose the classic <a href="http://moritz.faui2k3.org/en/backtracking">backtr
     <span class="kd">final</span> <span class="n">IsQueenSafe</span> <span class="n">isQueenSafe</span> <span class="o">=</span> <span class="k">new</span> <span class="n">IsQueenSafe</span><span class="o">(</span><span class="n">mover</span><span class="o">);</span>
     <span class="kd">final</span> <span class="n">PlaceNextQueens</span> <span class="n">placeNextQueens</span> <span class="o">=</span> <span class="k">new</span> <span class="n">PlaceNextQueens</span><span class="o">(</span><span class="n">isQueenSafe</span><span class="o">);</span>
     <span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">columns</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Ranges</span><span class="o">(</span><span class="k">new</span> <span class="n">ComparableComparator</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;(),</span> <span class="k">new</span> <span class="n">NextIntegerSequencingPolicy</span><span class="o">(),</span> <span class="mi">0</span><span class="o">).</span><span class="na">rightHalfOpen</span><span class="o">(</span><span class="mi">0</span><span class="o">,</span> <span class="n">Maybe</span><span class="o">.</span><span class="na">just</span><span class="o">(</span><span class="n">n</span><span class="o">));</span>
-    <span class="k">return</span> <span class="k">new</span> <span class="n">PlaceQueens</span><span class="o">(</span><span class="n">Dispatching</span><span class="o">.</span><span class="na">curry</span><span class="o">(</span><span class="n">placeNextQueens</span><span class="o">,</span> <span class="n">columns</span><span class="o">)).</span><span class="na">perform</span><span class="o">(</span><span class="n">n</span><span class="o">);</span>
+    <span class="k">return</span> <span class="k">new</span> <span class="nf">PlaceQueens</span><span class="o">(</span><span class="n">Dispatching</span><span class="o">.</span><span class="na">curry</span><span class="o">(</span><span class="n">placeNextQueens</span><span class="o">,</span> <span class="n">columns</span><span class="o">)).</span><span class="na">perform</span><span class="o">(</span><span class="n">n</span><span class="o">);</span>
 <span class="o">}</span>
 </pre></div>
 
@@ -140,7 +289,7 @@ I propose the classic <a href="http://moritz.faui2k3.org/en/backtracking">backtr
 <p>I will describe the main features of the current version 5.2 through some demonstrative examples, taken from the "classical" literature.</p>
 <h2>Quicksort</h2>
 <p>The following fragment implements the <a href="http://en.wikipedia.org/wiki/Quicksort">quicksort</a> algorithm, choosing, for simplicity, the first item as the pivot.</p>
-<div class="codehilite"><pre><span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">quicksort</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">items</span><span class="o">,</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
+<div class="codehilite"><pre><span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">quicksort</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">items</span><span class="o">,</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
     <span class="k">if</span> <span class="o">(!</span><span class="n">items</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
         <span class="k">return</span> <span class="n">items</span><span class="o">;</span>
     <span class="o">}</span>

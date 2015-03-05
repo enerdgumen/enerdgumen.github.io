@@ -30,25 +30,25 @@
 
     <p><a href="http://github.com/maurocchi/sauron">Sauron</a> is a simple self-contained <em>Python</em> 2.3 script, without any dependency, useful to monitor errors on log files in real time from the command-line.</p>
 <p>By default it follows all log files in <code>/var/log</code> directory and shown the rows containing an "error" word (bad, cannot, error, exception, fail, fails, failed, failure, incorrect, invalid, unable, unexpected, wrong).</p>
-<div class="codehilite"><pre><span class="nv">$ </span>sauron <span class="o">[</span>options<span class="o">]</span> <span class="o">[</span>paths <span class="o">(</span>default /var/log<span class="o">)]</span>
+<div class="codehilite"><pre><span class="err">$</span> <span class="n">sauron</span> <span class="p">[</span><span class="n">options</span><span class="p">]</span> <span class="p">[</span><span class="n">paths</span> <span class="p">(</span><span class="k">default</span> <span class="o">/</span><span class="n">var</span><span class="o">/</span><span class="n">log</span><span class="p">)]</span>
 
-Options:
-    -h, --help            show this <span class="nb">help </span>message and <span class="nb">exit</span>
-    -f FILENAME_REGEX, --files<span class="o">=</span>FILENAME_REGEX
-                          filename regex <span class="o">(</span>default <span class="s1">&#39;log$&#39;</span><span class="o">)</span>
-    -a, --all             the log file are followed from the begin
-    -w WORDS, --words<span class="o">=</span>WORDS
-                          comma-separed words which filters the lines <span class="o">(</span>default:
-                          error, exception, fail, fails, failed, failure,
-                          cannot, unable, unexpected, incorrect, invalid, bad,
-                          wrong<span class="o">)</span>
-    -r LINE_REGEX, --regex<span class="o">=</span>LINE_REGEX
-                          regex to filter the log lines <span class="o">(</span>it overwrites the
-                          --words option<span class="o">)</span>
-    -i CHECK_INTERVAL, --interval<span class="o">=</span>CHECK_INTERVAL
-                          interval in seconds before to scan again the paths
-                          <span class="o">(</span>default 1<span class="o">)</span>
-    --version
+<span class="nl">Options:</span>
+    <span class="o">-</span><span class="n">h</span><span class="p">,</span> <span class="o">--</span><span class="n">help</span>            <span class="n">show</span> <span class="n">this</span> <span class="n">help</span> <span class="n">message</span> <span class="n">and</span> <span class="n">exit</span>
+    <span class="o">-</span><span class="n">f</span> <span class="n">FILENAME_REGEX</span><span class="p">,</span> <span class="o">--</span><span class="n">files</span><span class="o">=</span><span class="n">FILENAME_REGEX</span>
+                          <span class="n">filename</span> <span class="n">regex</span> <span class="p">(</span><span class="k">default</span> <span class="err">&#39;</span><span class="n">log</span><span class="err">$&#39;</span><span class="p">)</span>
+    <span class="o">-</span><span class="n">a</span><span class="p">,</span> <span class="o">--</span><span class="n">all</span>             <span class="n">the</span> <span class="n">log</span> <span class="n">file</span> <span class="n">are</span> <span class="n">followed</span> <span class="n">from</span> <span class="n">the</span> <span class="n">begin</span>
+    <span class="o">-</span><span class="n">w</span> <span class="n">WORDS</span><span class="p">,</span> <span class="o">--</span><span class="n">words</span><span class="o">=</span><span class="n">WORDS</span>
+                          <span class="n">comma</span><span class="o">-</span><span class="n">separed</span> <span class="n">words</span> <span class="n">which</span> <span class="n">filters</span> <span class="n">the</span> <span class="n">lines</span> <span class="p">(</span><span class="k">default</span><span class="o">:</span>
+                          <span class="n">error</span><span class="p">,</span> <span class="n">exception</span><span class="p">,</span> <span class="n">fail</span><span class="p">,</span> <span class="n">fails</span><span class="p">,</span> <span class="n">failed</span><span class="p">,</span> <span class="n">failure</span><span class="p">,</span>
+                          <span class="n">cannot</span><span class="p">,</span> <span class="n">unable</span><span class="p">,</span> <span class="n">unexpected</span><span class="p">,</span> <span class="n">incorrect</span><span class="p">,</span> <span class="n">invalid</span><span class="p">,</span> <span class="n">bad</span><span class="p">,</span>
+                          <span class="n">wrong</span><span class="p">)</span>
+    <span class="o">-</span><span class="n">r</span> <span class="n">LINE_REGEX</span><span class="p">,</span> <span class="o">--</span><span class="n">regex</span><span class="o">=</span><span class="n">LINE_REGEX</span>
+                          <span class="n">regex</span> <span class="n">to</span> <span class="n">filter</span> <span class="n">the</span> <span class="n">log</span> <span class="n">lines</span> <span class="p">(</span><span class="n">it</span> <span class="n">overwrites</span> <span class="n">the</span>
+                          <span class="o">--</span><span class="n">words</span> <span class="n">option</span><span class="p">)</span>
+    <span class="o">-</span><span class="n">i</span> <span class="n">CHECK_INTERVAL</span><span class="p">,</span> <span class="o">--</span><span class="n">interval</span><span class="o">=</span><span class="n">CHECK_INTERVAL</span>
+                          <span class="n">interval</span> <span class="n">in</span> <span class="n">seconds</span> <span class="n">before</span> <span class="n">to</span> <span class="n">scan</span> <span class="n">again</span> <span class="n">the</span> <span class="n">paths</span>
+                          <span class="p">(</span><span class="k">default</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="o">--</span><span class="n">version</span>
 </pre></div>
 
     <!-- AddThis Button BEGIN -->
