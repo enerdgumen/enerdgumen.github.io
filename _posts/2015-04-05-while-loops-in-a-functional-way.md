@@ -47,6 +47,8 @@ The equivalent functional code is similar to the previous but it uses `iterate` 
     	.findFirst()
     	.get()
 
+<!-- more -->
+
 ## A little example
 
 As a demonstration, suppose you have started a task to a remote service and you want monitor the operation getting the task status in polling. You want read the status with 10 tentatives before to declare the operation failed too.
