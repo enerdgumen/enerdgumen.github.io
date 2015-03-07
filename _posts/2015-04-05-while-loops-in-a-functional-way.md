@@ -2,7 +2,7 @@ title: While loops in a functional way
 date: 2015-03-24 20:03
 tags: java, functional
 
-The following code shows a technics to implement while loops taking advantage of java Streams and functional programming.
+The following code shows a technique to implement while loops taking advantage of java streams and functional programming.
 
 ## Do/while loops
 

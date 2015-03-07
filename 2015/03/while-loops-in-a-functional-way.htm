@@ -28,7 +28,7 @@
         <div class="meta">Written by <strong>Mauro Rocchi</strong> on 24 March 2015</div>
     </header>
 
-    <p>The following code shows a technics to implement while loops taking advantage of java Streams and functional programming.</p>
+    <p>The following code shows a technique to implement while loops taking advantage of java streams and functional programming.</p>
 <h2>Do/while loops</h2>
 <p>This is a classic do/while loop where the body is essentially a supplier of states:</p>
 <div class="codehilite"><pre><span class="n">T</span> <span class="n">state</span><span class="o">;</span>
@@ -85,7 +85,7 @@
     <span class="k">do</span> <span class="o">{</span>
         <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
         <span class="k">try</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="nf">readEffectiveTaskStatus</span><span class="o">(...);</span>
+            <span class="k">return</span> <span class="n">readEffectiveTaskStatus</span><span class="o">(...);</span>
         <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
             <span class="c1">// log</span>
         <span class="o">}</span>
@@ -108,8 +108,8 @@
 <span class="n">State</span> <span class="nf">getTaskState</span><span class="o">()</span> <span class="o">{</span>
     <span class="k">return</span> <span class="n">Stream</span><span class="o">.</span><span class="na">generate</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">readEffectiveTaskStatus</span><span class="o">)</span>
         <span class="o">.</span><span class="na">limit</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="nl">Optional:</span><span class="o">:</span><span class="n">isPresent</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="nl">Optional:</span><span class="o">:</span><span class="n">get</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">Optional</span><span class="o">::</span><span class="n">isPresent</span><span class="o">)</span>
+        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">Optional</span><span class="o">::</span><span class="n">get</span><span class="o">)</span>
         <span class="o">.</span><span class="na">findFirst</span><span class="o">()</span>
         <span class="o">.</span><span class="na">orElse</span><span class="o">(</span><span class="n">State</span><span class="o">.</span><span class="na">failure</span><span class="o">());</span>
 <span class="o">}</span>
