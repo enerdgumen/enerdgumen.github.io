@@ -92,62 +92,9 @@
     <span class="o">.</span><span class="na">get</span><span class="o">()</span>
 </pre></div>
 
-
-<h2>A little example</h2>
-<p>As a demonstration, suppose you have started a task to a remote service and you want monitor the operation getting the task status in polling. You want read the status with 10 tentatives before to declare the operation failed too.</p>
-<p>An imperative solution:</p>
-<div class="codehilite"><pre><span class="n">Outcome</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-    <span class="n">State</span> <span class="n">state</span><span class="o">;</span>
-    <span class="k">do</span> <span class="o">{</span>
-        <span class="n">state</span> <span class="o">=</span> <span class="n">getTaskState</span><span class="o">();</span>
-    <span class="o">}</span> <span class="k">while</span> <span class="o">(!</span><span class="n">isCompleted</span><span class="o">(</span><span class="n">state</span><span class="o">));</span>
-    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="na">success</span> <span class="o">?</span> <span class="n">SUCCESS</span> <span class="o">:</span> <span class="n">FAILURE</span><span class="o">;</span>
-<span class="o">}</span>
-
-<span class="n">State</span> <span class="nf">getTaskState</span><span class="o">()</span> <span class="o">{</span>
-    <span class="kt">int</span> <span class="n">attempt</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
-    <span class="k">do</span> <span class="o">{</span>
-        <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
-        <span class="k">try</span> <span class="o">{</span>
-            <span class="k">return</span> <span class="n">readEffectiveTaskStatus</span><span class="o">(...);</span>
-        <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
-            <span class="c1">// log</span>
-        <span class="o">}</span>
-        <span class="n">attempt</span> <span class="o">+=</span> <span class="mi">1</span><span class="o">;</span>
-    <span class="o">}</span> <span class="k">while</span> <span class="o">(</span><span class="n">attempt</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="o">);</span>
-    <span class="k">return</span> <span class="n">State</span><span class="o">.</span><span class="na">failure</span><span class="o">();</span>
-<span class="o">}</span>
-</pre></div>
-
-
-<p>A functional alternative:</p>
-<div class="codehilite"><pre><span class="n">Outcome</span> <span class="nf">run</span><span class="o">()</span> <span class="o">{</span>
-    <span class="kd">final</span> <span class="n">State</span> <span class="n">state</span> <span class="o">=</span> <span class="n">Stream</span><span class="o">.</span><span class="na">generate</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">getTaskState</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">isCompleted</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">findFirst</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">get</span><span class="o">();</span>
-    <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="na">success</span> <span class="o">?</span> <span class="n">SUCCESS</span> <span class="o">:</span> <span class="n">FAILURE</span><span class="o">;</span>
-<span class="o">}</span>
-
-<span class="n">State</span> <span class="nf">getTaskState</span><span class="o">()</span> <span class="o">{</span>
-    <span class="k">return</span> <span class="n">Stream</span><span class="o">.</span><span class="na">generate</span><span class="o">(</span><span class="k">this</span><span class="o">::</span><span class="n">readEffectiveTaskStatus</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">limit</span><span class="o">(</span><span class="mi">10</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">filter</span><span class="o">(</span><span class="n">Optional</span><span class="o">::</span><span class="n">isPresent</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">map</span><span class="o">(</span><span class="n">Optional</span><span class="o">::</span><span class="n">get</span><span class="o">)</span>
-        <span class="o">.</span><span class="na">findFirst</span><span class="o">()</span>
-        <span class="o">.</span><span class="na">orElse</span><span class="o">(</span><span class="n">State</span><span class="o">.</span><span class="na">failure</span><span class="o">());</span>
-<span class="o">}</span>
-
-<span class="n">Optional</span><span class="o">&lt;</span><span class="n">State</span><span class="o">&gt;</span> <span class="nf">readEffectiveTaskStatus</span><span class="o">()</span> <span class="o">{</span>
-    <span class="k">try</span> <span class="o">{</span>
-        <span class="n">Thread</span><span class="o">.</span><span class="na">sleep</span><span class="o">(</span><span class="mi">1000</span><span class="o">);</span>
-        <span class="k">return</span> <span class="n">Optional</span><span class="o">.</span><span class="na">of</span><span class="o">(...);</span>
-    <span class="o">}</span> <span class="k">catch</span> <span class="o">(</span><span class="n">Exception</span> <span class="n">ex</span><span class="o">)</span> <span class="o">{</span>
-        <span class="k">return</span> <span class="n">Optional</span><span class="o">.</span><span class="na">empty</span><span class="o">();</span>
-    <span class="o">}</span>
-<span class="o">}</span>
-</pre></div>
-
+    <div class="more">
+        <a href="/2015/03/while-loops-in-a-functional-way.htm">(more...)</a>
+    </div>
 </article><article class="content">
     <header>
         <h1><a href="/2013/04/playing-with-haskell.htm">Playing with Haskell</a></h1>
