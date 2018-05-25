@@ -7,6 +7,25 @@
     <link rel="stylesheet" type="text/css" href="/css/theme.css"/>
     <link rel="icon" href="/favicon.png" type="image/png"/>
 
+    <!-- Cookie banner -->
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+    <script>
+    window.addEventListener("load", function(){
+    window.cookieconsent.initialise({
+      "palette": {
+        "popup": {
+          "background": "#383b75"
+        },
+        "button": {
+          "background": "#f1d600"
+        }
+      },
+      "theme": "edgeless",
+      "position": "bottom-right"
+    })});
+    </script>
+
     <!-- Google Analytics -->
     <script type="text/javascript">
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -32,7 +51,7 @@
 <p>I will describe the main features of the current version 5.2 through some demonstrative examples, taken from the "classical" literature.</p>
 <h2>Quicksort</h2>
 <p>The following fragment implements the <a href="http://en.wikipedia.org/wiki/Quicksort">quicksort</a> algorithm, choosing, for simplicity, the first item as the pivot.</p>
-<div class="codehilite"><pre><span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">quicksort</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">items</span><span class="o">,</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="kd">static</span> <span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">quicksort</span><span class="o">(</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">items</span><span class="o">,</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="n">order</span><span class="o">)</span> <span class="o">{</span>
     <span class="k">if</span> <span class="o">(!</span><span class="n">items</span><span class="o">.</span><span class="na">hasNext</span><span class="o">())</span> <span class="o">{</span>
         <span class="k">return</span> <span class="n">items</span><span class="o">;</span>
     <span class="o">}</span>
@@ -61,7 +80,7 @@ The code of <code>Consumers.all(items)</code> yields all elements remained of th
 <p>The <code>Multiplexing</code> façade handles operations such as "many to one" or vice versa. In this case, <code>Multiplexing.chain(...)</code> returns an iterator that concatenates the three ones received.</p>
 <p>Then, the quicksort gives back the elements lower than the pivot sorted recursively, the pivot, and the remaining elements, always sorted recursively. The selection of the elements lower than the pivot is carried out by the <code>Filtering.filter(tail, Dispatching.rcurry(order, head))</code> statement, which filters the list of objects holding the <code>Dispatching.rcurry(order, head)</code> predicate.</p>
 <p>The <code>rcurry</code> method stands for "right curry", the <a href="http://www.haskell.org/haskellwiki/Partial_application">partial application </a> (not  <a href="http://www.haskell.org/haskellwiki/Currying">currying</a>) of <code>head</code> to the second argument of the <code>order</code> predicate. In practice, it returns a unary predicate equivalent to:</p>
-<div class="codehilite"><pre><span class="k">new</span> <span class="n">Predicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;()</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="k">new</span> <span class="n">Predicate</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;()</span> <span class="o">{</span>
   <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">accept</span><span class="o">(</span><span class="n">T</span> <span class="n">value</span><span class="o">)</span> <span class="o">{</span>
     <span class="k">return</span> <span class="n">order</span><span class="o">.</span><span class="na">accept</span><span class="o">(</span><span class="n">value</span><span class="o">,</span> <span class="n">head</span><span class="o">);</span>
   <span class="o">}</span>
@@ -72,7 +91,7 @@ The code of <code>Consumers.all(items)</code> yields all elements remained of th
 <p>After it's necessary to concatenate the pivot, and given that <code>chain</code> concatenates iterators I used <code>Iterations.iterator(head)</code> to create an iterator that provides only one element (one could achieve the same effect with <code>Arrays.asList(head).iterator()</code>, but so the code is more clear).</p>
 <p>The third argument of the <code>chain</code> is similar to the first, but to get the remaining elements the predicate is inverted by the <code>Logic.not</code> method.</p>
 <p>The function, finally, can be used in the following way:</p>
-<div class="codehilite"><pre><span class="nd">@Test</span>
+<div class="codehilite"><pre><span></span><span class="nd">@Test</span>
 <span class="kd">public</span> <span class="kt">void</span> <span class="nf">sortingANonSortedList</span><span class="o">()</span> <span class="o">{</span>
     <span class="kd">final</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">ascOrder</span> <span class="o">=</span> <span class="k">new</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;()</span> <span class="o">{</span>
         <span class="kd">public</span> <span class="kt">boolean</span> <span class="nf">accept</span><span class="o">(</span><span class="n">Integer</span> <span class="n">a</span><span class="o">,</span> <span class="n">Integer</span> <span class="n">b</span><span class="o">)</span> <span class="o">{</span>

@@ -7,6 +7,25 @@
     <link rel="stylesheet" type="text/css" href="/css/theme.css"/>
     <link rel="icon" href="/favicon.png" type="image/png"/>
 
+    <!-- Cookie banner -->
+    <link rel="stylesheet" type="text/css" href="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.css" />
+    <script src="//cdnjs.cloudflare.com/ajax/libs/cookieconsent2/3.0.3/cookieconsent.min.js"></script>
+    <script>
+    window.addEventListener("load", function(){
+    window.cookieconsent.initialise({
+      "palette": {
+        "popup": {
+          "background": "#383b75"
+        },
+        "button": {
+          "background": "#f1d600"
+        }
+      },
+      "theme": "edgeless",
+      "position": "bottom-right"
+    })});
+    </script>
+
     <!-- Google Analytics -->
     <script type="text/javascript">
       (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
@@ -30,7 +49,7 @@
 
     <p>The <a href="http://en.wikipedia.org/wiki/Eight_queens_puzzle">problem of the N-queens</a> is a classic puzzle that consists in placing N queens on a chessboard NxN without that they threaten each other. With languages ​​that natively support the functional constructs, like <a href="http://www.scala-lang.org/">Scala</a>, the problem can be solved with less than 10 lines of code (without loss of clarity), with Java of course it's a bit more tricky.
 I propose the classic <a href="http://moritz.faui2k3.org/en/backtracking">backtracking algorithm</a>, developed with a functional object-oriented approach, using <a href="https://bitbucket.org/emaze/emaze-dysfunctional">Emaze Dysfunctional</a> extensively.</p>
-<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">static</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="nf">queens</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">static</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="nf">queens</span><span class="o">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">)</span> <span class="o">{</span>
     <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">queenMoves</span> <span class="o">=</span> <span class="n">Arrays</span><span class="o">.</span><span class="na">asList</span><span class="o">(</span>
             <span class="n">Pair</span><span class="o">.</span><span class="na">of</span><span class="o">(-</span><span class="mi">1</span><span class="o">,</span> <span class="o">-</span><span class="mi">1</span><span class="o">),</span>
             <span class="n">Pair</span><span class="o">.</span><span class="na">of</span><span class="o">(-</span><span class="mi">1</span><span class="o">,</span> <span class="mi">0</span><span class="o">),</span>
@@ -54,7 +73,7 @@ I propose the classic <a href="http://moritz.faui2k3.org/en/backtracking">backtr
 <li><code>PlaceQueens</code> is the function implementing the recursive search of the solutions.</li>
 </ul>
 <h2>Moving the queen</h2>
-<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Mover</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">Mover</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
 
     <span class="c1">// iterable of pairs where the former is the row increment, and the latter is the column increment</span>
     <span class="kd">private</span> <span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">moves</span><span class="o">;</span>
@@ -78,7 +97,7 @@ I propose the classic <a href="http://moritz.faui2k3.org/en/backtracking">backtr
 The responsability for moving the pieace is delegated to the following <code>MoveIterator</code>, that is the only component with state of the whole algorithm. The iterator applies the variation of position relative to the current one, until all the space on the board is consumed.</p>
 <p><code>Mover</code> uses a new function: <code>Applications.trasform</code>. It returns an iterator where the next element is obtained by applying the provided unary function to the original item, in other words it's the conventional <code>map</code> that operates over iterators in a lazy way.</p>
 <p>The result is an iterator containing all the positions reachable from the queen.</p>
-<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MoveIterator</span> <span class="kd">extends</span> <span class="n">ReadOnlyIterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">MoveIterator</span> <span class="kd">extends</span> <span class="n">ReadOnlyIterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="o">{</span>
 
     <span class="kd">private</span> <span class="kd">final</span> <span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">move</span><span class="o">;</span>
     <span class="kd">private</span> <span class="kt">int</span> <span class="n">row</span><span class="o">;</span>
@@ -106,7 +125,7 @@ The responsability for moving the pieace is delegated to the following <code>Mov
 
 <p>Finally <code>MoveIterator</code> extends <code>ReadOnlyIterator</code>, an iterator that doesn't support the method <code>delete</code>.</p>
 <h2>Is the queen safe?</h2>
-<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">IsQueenSafe</span> <span class="kd">implements</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">IsQueenSafe</span> <span class="kd">implements</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
 
     <span class="kd">private</span> <span class="kd">final</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">Iterator</span><span class="o">&lt;</span><span class="n">Pair</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">mover</span><span class="o">;</span>
 
@@ -130,7 +149,7 @@ The responsability for moving the pieace is delegated to the following <code>Mov
 <p>To check whether a queen is safe at a given location must "move" it and see if it meets another queen, so this component uses the <code>mover</code> collaborator to get all the possible reachable positions. Informally, the queen is in position <code>(row, column)</code> when <code>queens[row] == column</code>, therefore the predicate checks this situation.<br />
 Note the use of the <code>hasNext</code> as a result of the function, which takes advantage lazy evaluation of iterators: the function returns <em>false</em> when it detects the first queen.</p>
 <h2>Adding a queen</h2>
-<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PlaceNextQueens</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PlaceNextQueens</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="o">{</span>
 
     <span class="kd">private</span> <span class="kd">final</span> <span class="n">BinaryPredicate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="n">isQueenSafe</span><span class="o">;</span>
 
@@ -148,7 +167,7 @@ Note the use of the <code>hasNext</code> as a result of the function, which take
 
 <p>It receives the actual configuration of the queens and a list of columns on which to try to place a new queen on the next row, and returns all the possible configurations in which the new queen is safe.<br />
 To implement it in functional way I've used the functor <code>AddToList</code>, actually unavailable in <em>Dysfunctional</em>. Given a list and an element it returns a new list with the new item added.</p>
-<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AddToList</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">AddToList</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="kd">implements</span> <span class="n">BinaryDelegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;,</span> <span class="n">T</span><span class="o">&gt;</span> <span class="o">{</span>
 
     <span class="kd">public</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="nf">perform</span><span class="o">(</span><span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">list</span><span class="o">,</span> <span class="n">T</span> <span class="n">item</span><span class="o">)</span> <span class="o">{</span>
         <span class="kd">final</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">result</span> <span class="o">=</span> <span class="k">new</span> <span class="n">LinkedList</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;(</span><span class="n">list</span><span class="o">);</span>
@@ -160,7 +179,7 @@ To implement it in functional way I've used the functor <code>AddToList</code>, 
 
 
 <p>The list of columns is obtained generating through the façade <code>Ranges</code> an iterable from <code>0</code> to <code>n-1</code>:</p>
-<div class="codehilite"><pre><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">columns</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Ranges</span><span class="o">(</span>
+<div class="codehilite"><pre><span></span><span class="kd">final</span> <span class="n">Iterable</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;</span> <span class="n">columns</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Ranges</span><span class="o">(</span>
     <span class="k">new</span> <span class="n">ComparableComparator</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;(),</span>
     <span class="k">new</span> <span class="n">NextIntegerSequencingPolicy</span><span class="o">(),</span>
     <span class="mi">0</span>
@@ -169,7 +188,7 @@ To implement it in functional way I've used the functor <code>AddToList</code>, 
 
 
 <h2>Finding all solutions</h2>
-<div class="codehilite"><pre><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PlaceQueens</span> <span class="kd">implements</span> <span class="n">Delegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
+<div class="codehilite"><pre><span></span><span class="kd">public</span> <span class="kd">class</span> <span class="nc">PlaceQueens</span> <span class="kd">implements</span> <span class="n">Delegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">Integer</span><span class="o">&gt;</span> <span class="o">{</span>
 
     <span class="kd">private</span> <span class="kd">final</span> <span class="n">Delegate</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;,</span> <span class="n">List</span><span class="o">&lt;</span><span class="n">Integer</span><span class="o">&gt;&gt;</span> <span class="n">placeNextQueens</span><span class="o">;</span>
 
